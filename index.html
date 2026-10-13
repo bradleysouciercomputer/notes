@@ -1,0 +1,2930 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Notes</title>
+<style>
+  /* ============================================================
+     Theme tokens
+     ============================================================ */
+  :root {
+    --accent: #2563eb;
+    --accent-hover: #1d4ed8;
+    --accent-soft: #eff6ff;
+    --border: #e2e8f0;
+    --border-strong: #cbd5e1;
+    --text: #0f172a;
+    --text-muted: #64748b;
+    --text-faint: #94a3b8;
+    --bg: #f8fafc;
+    --surface: #ffffff;
+    --surface-2: #f1f5f9;
+    --danger: #dc2626;
+    --danger-soft: #fef2f2;
+    --success: #22c55e;
+    --warn: #f59e0b;
+    --shadow-sm: 0 1px 2px rgba(15, 23, 42, .06);
+    --shadow-lg: 0 10px 25px -5px rgba(15, 23, 42, .25);
+    --ripple-light: rgba(255, 255, 255, .5);
+    --ripple-surface: rgba(37, 99, 235, .22);
+  }
+
+  [data-theme="dark"] {
+    --accent: #3b82f6;
+    --accent-hover: #60a5fa;
+    --accent-soft: #1e293b;
+    --border: #1e293b;
+    --border-strong: #334155;
+    --text: #e2e8f0;
+    --text-muted: #94a3b8;
+    --text-faint: #64748b;
+    --bg: #0b1220;
+    --surface: #0f172a;
+    --surface-2: #1e293b;
+    --danger: #f87171;
+    --danger-soft: #2a1414;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, .4);
+    --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, .6);
+    --ripple-light: rgba(255, 255, 255, .3);
+    --ripple-surface: rgba(96, 165, 250, .25);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body { height: 100%; }
+
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+    transition: background-color .2s ease, color .2s ease;
+  }
+
+  button, input, textarea, select { font-family: inherit; }
+
+  .hidden { display: none !important; }
+
+  .sr-only {
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* ============================================================
+     App shell
+     ============================================================ */
+  .app {
+    display: grid;
+    grid-template-columns: 320px minmax(0, 1fr);
+    height: 100vh;
+    height: 100dvh;
+  }
+
+  /* ============================================================
+     Sidebar
+     ============================================================ */
+  .sidebar {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    transition: background-color .2s ease, border-color .2s ease;
+  }
+
+  .sidebar__head {
+    padding: 14px 14px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .sidebar__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .sidebar__title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 18px;
+    padding: 0 6px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0;
+    color: var(--text-muted);
+    background: var(--surface-2);
+    border-radius: 999px;
+  }
+
+  .sidebar__actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  /* ---------- Search ---------- */
+  .search {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .search > svg {
+    position: absolute;
+    left: 11px;
+    width: 15px;
+    height: 15px;
+    color: var(--text-faint);
+    pointer-events: none;
+  }
+
+  .search input {
+    width: 100%;
+    padding: 9px 32px 9px 34px;
+    font-size: 14px;
+    color: var(--text);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    outline: none;
+    transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
+  }
+
+  .search input::placeholder { color: var(--text-faint); }
+
+  .search input:focus {
+    background: var(--surface);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, .15);
+  }
+
+  .search__clear {
+    position: absolute;
+    right: 6px;
+    display: grid;
+    place-items: center;
+    width: 22px; height: 22px;
+    color: var(--text-faint);
+    background: none;
+    border: 0;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+
+  .search__clear:hover { color: var(--text); background: var(--surface-2); }
+  .search__clear svg { width: 12px; height: 12px; }
+
+  /* ---------- Sort row ---------- */
+  .sidebar__controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .select {
+    position: relative;
+    flex: 1;
+    display: flex;
+    align-items: center;
+  }
+
+  .select svg {
+    position: absolute;
+    right: 9px;
+    width: 12px; height: 12px;
+    color: var(--text-faint);
+    pointer-events: none;
+  }
+
+  .select select {
+    width: 100%;
+    padding: 7px 26px 7px 10px;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--text-muted);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    cursor: pointer;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+    transition: border-color .15s ease;
+  }
+
+  .select select:hover { border-color: var(--border-strong); }
+  .select select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37, 99, 235, .15); }
+
+  /* ---------- Note list ---------- */
+  .note-list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    margin: 0;
+    padding: 4px 10px 16px;
+    list-style: none;
+    overscroll-behavior: contain;
+  }
+
+  .note-item {
+    display: block;
+    width: 100%;
+    padding: 11px 12px;
+    text-align: left;
+    color: var(--text);
+    background: none;
+    border: 0;
+    border-radius: 9px;
+    cursor: pointer;
+    transition: background-color .13s ease;
+  }
+
+  .note-item:hover { background: var(--surface-2); }
+
+  .note-item:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+  }
+
+  .note-item.is-active {
+    background: var(--accent-soft);
+    box-shadow: inset 0 0 0 1px rgba(37, 99, 235, .28);
+  }
+
+  .note-item__top {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 3px;
+  }
+
+  .note-item__title {
+    flex: 1;
+    min-width: 0;
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .note-item__pin {
+    flex: none;
+    width: 13px; height: 13px;
+    color: var(--accent);
+    opacity: 0;
+    transition: opacity .12s ease;
+  }
+
+  .note-item.is-pinned .note-item__pin { opacity: 1; }
+
+  .note-item__preview {
+    font-size: 12.5px;
+    line-height: 1.45;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .note-item__time {
+    margin-top: 5px;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: .02em;
+    color: var(--text-faint);
+  }
+
+  mark {
+    padding: 0 1px;
+    color: inherit;
+    background: rgba(250, 204, 21, .45);
+    border-radius: 2px;
+  }
+
+  [data-theme="dark"] mark { background: rgba(250, 204, 21, .28); }
+
+  .list-empty {
+    padding: 28px 16px;
+    text-align: center;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text-muted);
+  }
+
+  /* ============================================================
+     Split button
+     ============================================================ */
+  .split-button {
+    position: relative;
+    display: inline-flex;
+    vertical-align: middle;
+  }
+
+  .split-button--block { display: flex; width: 100%; }
+
+  .split-button button {
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+    background: var(--accent);
+    border: 1px solid var(--accent);
+    cursor: pointer;
+    transition: background-color .15s ease, border-color .15s ease;
+  }
+
+  .split-button__main {
+    flex: 1;
+    padding: 9px 16px;
+    text-align: center;
+    border-radius: 8px 0 0 8px;
+    border-right: none;
+  }
+
+  .split-button__toggle {
+    display: grid;
+    place-items: center;
+    padding: 9px 11px;
+    border-radius: 0 8px 8px 0;
+    border-left: 1px solid rgba(255, 255, 255, .4);
+  }
+
+  .split-button__toggle svg { transition: transform .15s ease; }
+  .split-button button:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+  .split-button button:active { transform: translateY(1px); }
+  .split-button button:focus-visible { outline: 2px solid #93c5fd; outline-offset: 2px; }
+  .split-button.is-open .split-button__toggle { background: var(--accent-hover); border-color: var(--accent-hover); }
+  .split-button.is-open .split-button__toggle svg { transform: rotate(180deg); }
+
+  /* ============================================================
+     Dropdown menu (shared)
+     ============================================================ */
+  .menu-wrap { position: relative; display: inline-flex; }
+
+  .menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    z-index: 40;
+    min-width: 220px;
+    margin: 0;
+    padding: 5px;
+    list-style: none;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    box-shadow: var(--shadow-lg);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-4px);
+    transition: opacity .12s ease, transform .12s ease, visibility .12s;
+  }
+
+  .is-open > .menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  .menu [role="menuitem"] {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 9px 11px;
+    font-size: 13.5px;
+    font-weight: 500;
+    text-align: left;
+    color: var(--text);
+    background: none;
+    border: 0;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+
+  .menu [role="menuitem"]:hover,
+  .menu [role="menuitem"]:focus-visible {
+    background: var(--accent-soft);
+    color: var(--accent);
+    outline: none;
+  }
+
+  .menu [role="menuitem"] svg {
+    flex: none;
+    width: 15px; height: 15px;
+    color: var(--text-muted);
+  }
+
+  .menu [role="menuitem"]:hover svg,
+  .menu [role="menuitem"]:focus-visible svg { color: var(--accent); }
+
+  .menu [role="menuitem"].is-danger { color: var(--danger); }
+  .menu [role="menuitem"].is-danger svg { color: var(--danger); }
+  .menu [role="menuitem"].is-danger:hover,
+  .menu [role="menuitem"].is-danger:focus-visible { background: var(--danger-soft); }
+
+  .menu__sep {
+    height: 1px;
+    margin: 5px 6px;
+    background: var(--border);
+  }
+
+  .menu__shortcut {
+    margin-left: auto;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-faint);
+  }
+
+  /* ============================================================
+     Ripple — shared host styles
+     ============================================================ */
+  .icon-btn,
+  .btn,
+  .split-button button,
+  .menu [role="menuitem"],
+  .note-item,
+  .toast__action,
+  .search__clear,
+  .context-menu__item {
+    position: relative;
+    overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    -webkit-touch-callout: none;
+    user-select: none;
+  }
+
+  .ripple {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    background: var(--ripple-light);
+    transform: scale(0);
+    opacity: .9;
+    animation: ripple-expand .6s cubic-bezier(.2, .6, .3, 1) forwards;
+  }
+
+  .ripple--dark { background: var(--ripple-surface); }
+
+  @keyframes ripple-expand {
+    to { transform: scale(1); opacity: 0; }
+  }
+
+  /* ============================================================
+     Editor
+     ============================================================ */
+  .editor {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    background: var(--surface);
+    transition: background-color .2s ease;
+  }
+
+  .editor__pane {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .editor__bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 20px 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .editor__title {
+    flex: 1;
+    min-width: 0;
+    padding: 2px 0;
+    font-size: 21px;
+    font-weight: 700;
+    letter-spacing: -.01em;
+    color: var(--text);
+    background: none;
+    border: 0;
+    outline: none;
+  }
+
+  .editor__title::placeholder { color: var(--text-faint); }
+
+  .editor__actions { display: flex; align-items: center; gap: 2px; }
+
+  .editor__scroll { flex: 1; min-height: 0; display: flex; }
+
+  .editor__body,
+  .editor__preview {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 20px;
+    font-size: 15px;
+    line-height: 1.75;
+    color: var(--text);
+  }
+
+  .editor__body {
+    resize: none;
+    background: none;
+    border: 0;
+    outline: none;
+    font-family: inherit;
+  }
+
+  .editor__body::placeholder { color: var(--text-faint); }
+
+  .editor__foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 9px 20px 12px;
+    font-size: 12px;
+    color: var(--text-muted);
+    border-top: 1px solid var(--border);
+  }
+
+  .editor__status { display: inline-flex; align-items: center; gap: 6px; }
+
+  .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--success);
+    transition: background-color .2s ease;
+  }
+
+  .dot.is-saving { background: var(--warn); }
+
+  /* ---------- Markdown preview ---------- */
+  .editor__preview { padding-top: 22px; }
+  .editor__preview > *:first-child { margin-top: 0; }
+  .editor__preview > *:last-child { margin-bottom: 0; }
+
+  .editor__preview h1,
+  .editor__preview h2,
+  .editor__preview h3,
+  .editor__preview h4,
+  .editor__preview h5,
+  .editor__preview h6 {
+    margin: 1.4em 0 .55em;
+    font-weight: 700;
+    line-height: 1.3;
+    letter-spacing: -.01em;
+  }
+
+  .editor__preview h1 { font-size: 1.7em; }
+  .editor__preview h2 { font-size: 1.4em; }
+  .editor__preview h3 { font-size: 1.18em; }
+  .editor__preview h4,
+  .editor__preview h5,
+  .editor__preview h6 { font-size: 1em; }
+
+  .editor__preview p { margin: 0 0 .9em; }
+
+  .editor__preview ul,
+  .editor__preview ol { margin: 0 0 .9em; padding-left: 1.4em; }
+
+  .editor__preview li { margin: .2em 0; }
+
+  .editor__preview .task-list {
+    padding-left: .2em;
+    list-style: none;
+  }
+
+  .editor__preview .task-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .editor__preview .task-list input {
+    margin-top: .38em;
+    flex: none;
+    accent-color: var(--accent);
+  }
+
+  .editor__preview blockquote {
+    margin: 0 0 .9em;
+    padding: .1em 0 .1em 14px;
+    color: var(--text-muted);
+    border-left: 3px solid var(--border-strong);
+  }
+
+  .editor__preview code {
+    padding: .12em .38em;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: .88em;
+    color: var(--text);
+    background: var(--surface-2);
+    border-radius: 4px;
+  }
+
+  .editor__preview pre {
+    margin: 0 0 1em;
+    padding: 12px 14px;
+    overflow-x: auto;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+
+  .editor__preview pre code {
+    padding: 0;
+    background: none;
+    font-size: .86em;
+    line-height: 1.6;
+  }
+
+  .editor__preview a {
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .editor__preview hr {
+    margin: 1.5em 0;
+    border: 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .md-empty {
+    margin: 0;
+    font-size: 14px;
+    color: var(--text-faint);
+    font-style: italic;
+  }
+
+  /* ---------- Empty state ---------- */
+  .editor__empty {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 40px;
+    text-align: center;
+  }
+
+  .editor__empty svg { width: 40px; height: 40px; color: var(--border-strong); }
+
+  .editor__empty h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .editor__empty p {
+    margin: 0;
+    max-width: 320px;
+    font-size: 13.5px;
+    line-height: 1.65;
+    color: var(--text-muted);
+  }
+
+  .editor__empty kbd {
+    display: inline-block;
+    padding: 1px 5px;
+    font-family: inherit;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-bottom-width: 2px;
+    border-radius: 4px;
+  }
+
+  /* ============================================================
+     Icon button
+     ============================================================ */
+  .icon-btn {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 34px;
+    height: 34px;
+    color: var(--text-muted);
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color .13s ease, color .13s ease, border-color .13s ease;
+  }
+
+  .icon-btn svg { width: 16px; height: 16px; }
+
+  .icon-btn:hover {
+    color: var(--accent);
+    background: var(--accent-soft);
+    border-color: rgba(37, 99, 235, .18);
+  }
+
+  .icon-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  .icon-btn.is-on {
+    color: var(--accent);
+    background: var(--accent-soft);
+    border-color: rgba(37, 99, 235, .28);
+  }
+
+  .icon-btn--danger:hover {
+    color: var(--danger);
+    background: var(--danger-soft);
+    border-color: rgba(220, 38, 38, .2);
+  }
+
+  [data-theme="dark"] .icon-sun { display: none; }
+  html:not([data-theme="dark"]) .icon-moon { display: none; }
+
+  /* ============================================================
+     Context menu
+     ============================================================ */
+  .context-menu {
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 200;
+    min-width: 220px;
+    max-width: min(90vw, 320px);
+    margin: 0;
+    padding: 5px;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    box-shadow: var(--shadow-lg);
+    opacity: 0;
+    visibility: hidden;
+    transform: scale(.96);
+    transform-origin: top left;
+    transition: opacity .1s ease, transform .1s ease, visibility .1s;
+    will-change: transform, opacity;
+  }
+
+  .context-menu.is-open {
+    opacity: 1;
+    visibility: visible;
+    transform: scale(1);
+  }
+
+  .context-menu__item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 8px 11px;
+    font-size: 13.5px;
+    font-weight: 500;
+    text-align: left;
+    color: var(--text);
+    background: none;
+    border: 0;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+
+  .context-menu__item:hover,
+  .context-menu__item:focus-visible {
+    background: var(--accent-soft);
+    color: var(--accent);
+    outline: none;
+  }
+
+  .context-menu__item svg {
+    flex: none;
+    width: 15px;
+    height: 15px;
+    color: var(--text-muted);
+  }
+
+  .context-menu__item:hover svg,
+  .context-menu__item:focus-visible svg { color: var(--accent); }
+
+  .context-menu__item.is-danger { color: var(--danger); }
+  .context-menu__item.is-danger svg { color: var(--danger); }
+  .context-menu__item.is-danger:hover,
+  .context-menu__item.is-danger:focus-visible { background: var(--danger-soft); }
+
+  .context-menu__label {
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .context-menu__shortcut {
+    flex: none;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-faint);
+  }
+
+  .context-menu__sep {
+    height: 1px;
+    margin: 5px 6px;
+    background: var(--border);
+  }
+
+  /* ============================================================
+     Toast
+     ============================================================ */
+  .toast-stack {
+    position: fixed;
+    left: 50%;
+    bottom: 24px;
+    z-index: 300;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    transform: translateX(-50%);
+    pointer-events: none;
+  }
+
+  .toast {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    max-width: min(92vw, 420px);
+    padding: 11px 14px;
+    font-size: 13.5px;
+    font-weight: 500;
+    color: #f8fafc;
+    background: #1e293b;
+    border-radius: 10px;
+    box-shadow: var(--shadow-lg);
+    pointer-events: auto;
+    animation: toast-in .22s cubic-bezier(.2, .8, .3, 1);
+  }
+
+  [data-theme="dark"] .toast {
+    color: var(--text);
+    border: 1px solid var(--border-strong);
+  }
+
+  .toast.is-leaving { animation: toast-out .18s ease forwards; }
+
+  .toast__action {
+    flex: none;
+    padding: 4px 9px;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #93c5fd;
+    background: none;
+    border: 0;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color .13s ease;
+  }
+
+  .toast__action:hover { background: rgba(147, 197, 253, .16); }
+
+  @keyframes toast-in {
+    from { opacity: 0; transform: translateY(12px) scale(.98); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  @keyframes toast-out {
+    to { opacity: 0; transform: translateY(8px) scale(.98); }
+  }
+
+  /* ============================================================
+     Modal
+     ============================================================ */
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 250;
+    display: grid;
+    place-items: center;
+    padding: 20px;
+    background: rgba(15, 23, 42, .45);
+    backdrop-filter: blur(2px);
+    animation: fade-in .15s ease;
+  }
+
+  .modal {
+    width: 100%;
+    max-width: 380px;
+    padding: 22px 22px 18px;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 14px;
+    box-shadow: var(--shadow-lg);
+    animation: modal-in .18s cubic-bezier(.2, .8, .3, 1);
+  }
+
+  .modal__title {
+    margin: 0 0 6px;
+    font-size: 16.5px;
+    font-weight: 700;
+    letter-spacing: -.01em;
+  }
+
+  .modal__desc {
+    margin: 0 0 18px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: var(--text-muted);
+  }
+
+  .modal__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  .btn {
+    padding: 9px 16px;
+    font-size: 13.5px;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color .13s ease, border-color .13s ease, color .13s ease;
+  }
+
+  .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .btn--ghost {
+    color: var(--text);
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+  }
+
+  .btn--ghost:hover { background: var(--surface-2); }
+
+  .btn--danger {
+    color: #fff;
+    background: var(--danger);
+    border: 1px solid var(--danger);
+  }
+
+  .btn--danger:hover { filter: brightness(.92); }
+
+  .btn--primary {
+    color: #fff;
+    background: var(--accent);
+    border: 1px solid var(--accent);
+  }
+
+  .btn--primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+
+  @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+  @keyframes modal-in {
+    from { opacity: 0; transform: translateY(8px) scale(.98); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  /* ============================================================
+     Scrollbars
+     ============================================================ */
+  .note-list::-webkit-scrollbar,
+  .editor__body::-webkit-scrollbar,
+  .editor__preview::-webkit-scrollbar { width: 10px; }
+
+  .note-list::-webkit-scrollbar-thumb,
+  .editor__body::-webkit-scrollbar-thumb,
+  .editor__preview::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border: 3px solid var(--surface);
+    border-radius: 10px;
+  }
+
+  .note-list::-webkit-scrollbar-thumb:hover,
+  .editor__body::-webkit-scrollbar-thumb:hover,
+  .editor__preview::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
+
+  /* ============================================================
+     Responsive
+     ============================================================ */
+  @media (max-width: 760px) {
+    .app {
+      grid-template-columns: 1fr;
+      grid-template-rows: minmax(0, 42vh) minmax(0, 1fr);
+    }
+
+    .sidebar { border-right: none; border-bottom: 1px solid var(--border); }
+    .editor__bar { padding: 12px 16px 10px; }
+    .editor__title { font-size: 18px; }
+    .editor__body, .editor__preview { padding: 16px; }
+    .editor__foot { padding: 8px 16px 11px; }
+  }
+
+  /* ============================================================
+     Reduced motion
+     ============================================================ */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: .001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: .001ms !important;
+    }
+    .ripple { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ===================== Sidebar ===================== -->
+  <aside class="sidebar">
+
+    <header class="sidebar__head">
+
+      <div class="sidebar__row">
+        <h1 class="sidebar__title">
+          Notes <span class="badge" id="noteCount">0</span>
+        </h1>
+
+        <div class="sidebar__actions">
+          <button type="button" class="icon-btn" id="themeBtn"
+                  aria-label="Toggle dark mode" title="Toggle dark mode">
+            <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="4"/>
+              <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+            </svg>
+            <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+            </svg>
+          </button>
+
+          <div class="menu-wrap" id="appMenuWrap">
+            <button type="button" class="icon-btn" id="appMenuBtn"
+                    aria-haspopup="true" aria-expanded="false" aria-label="App menu" title="App menu">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <circle cx="12" cy="5" r="1.8"/>
+                <circle cx="12" cy="12" r="1.8"/>
+                <circle cx="12" cy="19" r="1.8"/>
+              </svg>
+            </button>
+            <ul class="menu" role="menu" aria-label="App menu">
+              <li role="none">
+                <button type="button" role="menuitem" id="exportAllBtn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                       stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <path d="M7 10l5 5 5-5"/>
+                    <path d="M12 15V3"/>
+                  </svg>
+                  Export all notes
+                </button>
+              </li>
+              <li role="none">
+                <button type="button" role="menuitem" id="importBtn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                       stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <path d="M17 8l-5-5-5 5"/>
+                    <path d="M12 3v12"/>
+                  </svg>
+                  Import notes…
+                </button>
+              </li>
+              <li role="none"><div class="menu__sep"></div></li>
+              <li role="none">
+                <button type="button" role="menuitem" id="clearAllBtn" class="is-danger">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                       stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M3 6h18"/>
+                    <path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/>
+                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                  </svg>
+                  Delete all notes
+                </button>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Split button: New note -->
+      <div class="split-button split-button--block" id="newNoteSplit">
+        <button type="button" class="split-button__main" id="newNoteBtn">New note</button>
+        <button type="button" class="split-button__toggle" id="newNoteToggle"
+                aria-haspopup="true" aria-expanded="false" aria-label="New note from template">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="3"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M6 9l6 6 6-6"/>
+          </svg>
+        </button>
+        <ul class="menu" role="menu" aria-label="New note from template">
+          <li role="none">
+            <button type="button" role="menuitem" data-template="blank">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <path d="M14 2v6h6"/>
+              </svg>
+              Blank note
+              <span class="menu__shortcut">⌘N</span>
+            </button>
+          </li>
+          <li role="none">
+            <button type="button" role="menuitem" data-template="meeting">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+              Meeting notes
+            </button>
+          </li>
+          <li role="none">
+            <button type="button" role="menuitem" data-template="todo">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M9 11l3 3L22 4"/>
+                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+              </svg>
+              To-do list
+            </button>
+          </li>
+          <li role="none">
+            <button type="button" role="menuitem" data-template="idea">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M9 18h6"/>
+                <path d="M10 22h4"/>
+                <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/>
+              </svg>
+              Idea
+            </button>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Search -->
+      <div class="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="8"/>
+          <path d="M21 21l-4.35-4.35"/>
+        </svg>
+        <input type="search" id="searchInput" placeholder="Search notes…"
+               aria-label="Search notes" autocomplete="off" spellcheck="false">
+        <button type="button" class="search__clear hidden" id="searchClear" aria-label="Clear search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Sort -->
+      <div class="sidebar__controls">
+        <label class="select">
+          <span class="sr-only">Sort notes by</span>
+          <select id="sortSelect">
+            <option value="updated">Last updated</option>
+            <option value="created">Date created</option>
+            <option value="title">Title (A–Z)</option>
+          </select>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M6 9l6 6 6-6"/>
+          </svg>
+        </label>
+      </div>
+    </header>
+
+    <ul class="note-list" id="noteList" role="list"></ul>
+  </aside>
+
+  <!-- ===================== Editor ===================== -->
+  <main class="editor">
+
+    <!-- Empty state -->
+    <div class="editor__empty" id="emptyState">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <path d="M14 2v6h6"/>
+        <path d="M8 13h8"/>
+        <path d="M8 17h5"/>
+      </svg>
+      <h2 id="emptyTitle">No note selected</h2>
+      <p id="emptyText">
+        Create a note to get started. Press <kbd>⌘N</kbd> or <kbd>Ctrl</kbd>+<kbd>N</kbd>.
+      </p>
+    </div>
+
+    <!-- Editing surface -->
+    <div class="editor__pane hidden" id="editorPane">
+
+      <div class="editor__bar">
+        <input type="text" class="editor__title" id="titleInput"
+               placeholder="Untitled note" aria-label="Note title" autocomplete="off">
+
+        <div class="editor__actions">
+          <button type="button" class="icon-btn" id="previewBtn"
+                  aria-pressed="false" aria-label="Toggle markdown preview"
+                  title="Preview markdown (⌘E)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+
+          <button type="button" class="icon-btn" id="pinBtn"
+                  aria-pressed="false" aria-label="Pin note" title="Pin note">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 17v5"/>
+              <path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/>
+            </svg>
+          </button>
+
+          <div class="menu-wrap" id="moreWrap">
+            <button type="button" class="icon-btn" id="moreBtn"
+                    aria-haspopup="true" aria-expanded="false"
+                    aria-label="More actions" title="More actions">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <circle cx="12" cy="5" r="1.8"/>
+                <circle cx="12" cy="12" r="1.8"/>
+                <circle cx="12" cy="19" r="1.8"/>
+              </svg>
+            </button>
+            <ul class="menu" role="menu" aria-label="More actions">
+              <li role="none">
+                <button type="button" role="menuitem" id="dupBtn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                       stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <rect x="9" y="9" width="12" height="12" rx="2"/>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                  </svg>
+                  Duplicate
+                  <span class="menu__shortcut">⌘D</span>
+                </button>
+              </li>
+              <li role="none">
+                <button type="button" role="menuitem" id="copyBtn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                       stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <rect x="9" y="9" width="13" height="13" rx="2"/>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                  </svg>
+                  Copy to clipboard
+                </button>
+              </li>
+              <li role="none">
+                <button type="button" role="menuitem" id="exportOneBtn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                       stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <path d="M7 10l5 5 5-5"/>
+                    <path d="M12 15V3"/>
+                  </svg>
+                  Download as .md
+                </button>
+              </li>
+              <li role="none"><div class="menu__sep"></div></li>
+              <li role="none">
+                <button type="button" role="menuitem" id="deleteBtn" class="is-danger">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                       stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M3 6h18"/>
+                    <path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/>
+                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                  </svg>
+                  Delete note
+                </button>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="editor__scroll">
+        <textarea class="editor__body" id="bodyInput"
+                  placeholder="Start writing… Markdown supported."
+                  aria-label="Note body" spellcheck="true"></textarea>
+        <article class="editor__preview hidden" id="previewPane" aria-label="Markdown preview"></article>
+      </div>
+
+      <div class="editor__foot">
+        <span class="editor__status">
+          <span class="dot" id="statusDot"></span>
+          <span id="statusText">Saved</span>
+        </span>
+        <span id="wordCount">0 words</span>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<input type="file" id="importInput" accept="application/json,.json" hidden>
+
+<div class="toast-stack" id="toastStack" aria-live="polite" aria-atomic="false"></div>
+
+<div class="modal-backdrop hidden" id="modalBackdrop">
+  <div class="modal" role="dialog" aria-modal="true"
+       aria-labelledby="modalTitle" aria-describedby="modalDesc">
+    <h2 class="modal__title" id="modalTitle">Delete note?</h2>
+    <p class="modal__desc" id="modalDesc">This action cannot be undone.</p>
+    <div class="modal__actions">
+      <button type="button" class="btn btn--ghost" id="modalCancel">Cancel</button>
+      <button type="button" class="btn btn--danger" id="modalConfirm">Delete</button>
+    </div>
+  </div>
+</div>
+
+<div class="context-menu" id="contextMenu" role="menu" aria-hidden="true"></div>
+
+<script>
+/* ============================================================
+   1. Constants & state
+   ============================================================ */
+const STORAGE_KEY = 'notes-app-v3';
+const THEME_KEY   = 'notes-theme';
+const SORT_KEY    = 'notes-sort';
+const SAVE_DELAY  = 450;
+
+const TEMPLATES = {
+  blank:   { title: '', body: '' },
+  meeting: {
+    title: 'Meeting notes',
+    body: '**Date:** \n**Attendees:** \n\n## Agenda\n- \n\n## Notes\n- \n\n## Action items\n- [ ] '
+  },
+  todo: {
+    title: 'To-do',
+    body: '- [ ] \n- [ ] \n- [ ] '
+  },
+  idea: {
+    title: 'Idea',
+    body: '## What if…\n\n\n## Why it matters\n\n\n## Next step\n'
+  }
+};
+
+const IS_MAC = /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent);
+
+let notes       = [];
+let activeId    = null;
+let query       = '';
+let sortMode    = 'updated';
+let previewMode = false;
+let saveTimer   = null;
+let lastDeleted = null;
+let listResortTimer = null;
+
+const $ = (id) => document.getElementById(id);
+
+/* ============================================================
+   2. Inline SVG icons
+   ============================================================ */
+const svg = (paths, sw = 2) =>
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="' + sw +
+  '" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + paths + '</svg>';
+
+const ICON = {
+  open:      svg('<path d="M15 3h6v6"/><path d="M10 14L21 3"/><path d="M21 14v7H3V3h7"/>'),
+  pin:       svg('<path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/>'),
+  duplicate: svg('<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>'),
+  copy:      svg('<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>'),
+  download:  svg('<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/>'),
+  upload:    svg('<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/>'),
+  del:       svg('<path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>'),
+  newNote:   svg('<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M12 18v-6"/><path d="M9 15h6"/>'),
+  meeting:   svg('<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>'),
+  todo:      svg('<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>'),
+  idea:      svg('<path d="M9 18h6"/><path d="M10 22h4"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/>'),
+  eye:       svg('<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>'),
+  edit:      svg('<path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4z"/>'),
+  sun:       svg('<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>'),
+  moon:      svg('<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>')
+};
+
+/* ============================================================
+   3. Utilities
+   ============================================================ */
+function uid() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+}
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function formatTime(ts) {
+  const diff = Date.now() - ts;
+  if (diff < 60_000)         return 'Just now';
+  if (diff < 3_600_000)      return Math.floor(diff / 60_000) + 'm ago';
+  if (diff < 86_400_000)     return Math.floor(diff / 3_600_000) + 'h ago';
+  if (diff < 7 * 86_400_000) return Math.floor(diff / 86_400_000) + 'd ago';
+  return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
+function titleOf(note) {
+  const t = (note.title || '').trim();
+  return t || 'Untitled note';
+}
+
+function previewOf(note) {
+  const text = (note.body || '').replace(/\s+/g, ' ').trim();
+  if (!text) return 'No additional text';
+  return text.length > 70 ? text.slice(0, 70) + '…' : text;
+}
+
+function countWords(text) {
+  const t = (text || '').trim();
+  return t ? t.split(/\s+/).length : 0;
+}
+
+function highlightMatch(text, q) {
+  const safe = escapeHtml(text);
+  if (!q) return safe;
+  const idx = text.toLowerCase().indexOf(q.toLowerCase());
+  if (idx === -1) return safe;
+  return escapeHtml(text.slice(0, idx))
+       + '<mark>' + escapeHtml(text.slice(idx, idx + q.length)) + '</mark>'
+       + escapeHtml(text.slice(idx + q.length));
+}
+
+function getActiveNote() {
+  return notes.find((n) => n.id === activeId) || null;
+}
+
+/* ============================================================
+   4. Persistence
+   ============================================================ */
+function loadNotes() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .filter((n) => n && typeof n === 'object')
+      .map((n) => ({
+        id:        typeof n.id === 'string' ? n.id : uid(),
+        title:     typeof n.title === 'string' ? n.title : '',
+        body:      typeof n.body === 'string' ? n.body : '',
+        pinned:    !!n.pinned,
+        createdAt: Number(n.createdAt) || Date.now(),
+        updatedAt: Number(n.updatedAt) || Date.now()
+      }));
+  } catch {
+    return [];
+  }
+}
+
+function persist() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/* ============================================================
+   5. Theme
+   ============================================================ */
+function applyTheme(theme) {
+  if (theme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+  }
+  try { localStorage.setItem(THEME_KEY, theme); } catch {}
+}
+
+function initTheme() {
+  let theme;
+  try { theme = localStorage.getItem(THEME_KEY); } catch {}
+  if (!theme) {
+    theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+  applyTheme(theme);
+}
+
+$('themeBtn').addEventListener('click', () => {
+  const isDark = document.documentElement.hasAttribute('data-theme');
+  applyTheme(isDark ? 'light' : 'dark');
+});
+
+/* ============================================================
+   6. Ripple — global delegation
+   ============================================================ */
+const RIPPLE_SELECTOR = [
+  '.icon-btn',
+  '.btn',
+  '.split-button__main',
+  '.split-button__toggle',
+  '.menu [role="menuitem"]',
+  '.note-item',
+  '.toast__action',
+  '.search__clear',
+  '.context-menu__item'
+].join(',');
+
+/* Elements that sit on light backgrounds get a darker ripple. */
+const RIPPLE_DARK_SELECTOR = [
+  '.icon-btn',
+  '.btn--ghost',
+  '.note-item',
+  '.toast__action',
+  '.search__clear',
+  '.context-menu__item',
+  '.menu [role="menuitem"]'
+].join(',');
+
+function spawnRipple(el, x, y, { dark = false } = {}) {
+  const rect = el.getBoundingClientRect();
+
+  x = Math.max(0, Math.min(x, rect.width));
+  y = Math.max(0, Math.min(y, rect.height));
+
+  const radius = Math.hypot(
+    Math.max(x, rect.width - x),
+    Math.max(y, rect.height - y)
+  );
+
+  const ripple = document.createElement('span');
+  ripple.className = dark ? 'ripple ripple--dark' : 'ripple';
+  ripple.style.width  = ripple.style.height = radius * 2 + 'px';
+  ripple.style.left   = x - radius + 'px';
+  ripple.style.top    = y - radius + 'px';
+
+  el.appendChild(ripple);
+  ripple.addEventListener('animationend', () => ripple.remove(), { once: true });
+  // Safety net in case animationend is missed
+  setTimeout(() => ripple.remove(), 800);
+}
+
+function isDarkHost(el) {
+  return el.matches(RIPPLE_DARK_SELECTOR) || !!el.closest('.menu');
+}
+
+document.addEventListener('pointerdown', (e) => {
+  if (e.pointerType === 'mouse' && e.button !== 0) return;
+  const el = e.target.closest(RIPPLE_SELECTOR);
+  if (!el) return;
+  const rect = el.getBoundingClientRect();
+  spawnRipple(el, e.clientX - rect.left, e.clientY - rect.top, { dark: isDarkHost(el) });
+}, { passive: true });
+
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter' && e.key !== ' ' && e.key !== 'Spacebar') return;
+  const el = e.target.closest(RIPPLE_SELECTOR);
+  if (!el || el.tagName !== 'BUTTON') return;
+  const rect = el.getBoundingClientRect();
+  spawnRipple(el, rect.width / 2, rect.height / 2, { dark: isDarkHost(el) });
+});
+
+/* ============================================================
+   7. Toast
+   ============================================================ */
+const toastStack = $('toastStack');
+
+function toast(message, { action, duration = 4500 } = {}) {
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.setAttribute('role', 'status');
+
+  const text = document.createElement('span');
+  text.textContent = message;
+  el.appendChild(text);
+
+  let timer;
+
+  function dismiss() {
+    clearTimeout(timer);
+    if (!el.isConnected) return;
+    el.classList.add('is-leaving');
+    el.addEventListener('animationend', () => el.remove(), { once: true });
+    setTimeout(() => el.remove(), 400);
+  }
+
+  if (action) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'toast__action';
+    btn.textContent = action.label;
+    btn.addEventListener('click', () => {
+      action.onClick();
+      dismiss();
+    });
+    el.appendChild(btn);
+  }
+
+  toastStack.appendChild(el);
+  timer = setTimeout(dismiss, duration);
+
+  return dismiss;
+}
+
+/* ============================================================
+   8. Confirm dialog
+   ============================================================ */
+const modalBackdrop = $('modalBackdrop');
+const modalTitle    = $('modalTitle');
+const modalDesc     = $('modalDesc');
+const modalCancel   = $('modalCancel');
+const modalConfirm  = $('modalConfirm');
+
+let modalResolve = null;
+let lastFocused  = null;
+
+function confirmDialog({ title, message, confirmLabel = 'Confirm', danger = true } = {}) {
+  return new Promise((resolve) => {
+    modalResolve = resolve;
+    lastFocused = document.activeElement;
+
+    modalTitle.textContent   = title || 'Are you sure?';
+    modalDesc.textContent    = message || '';
+    modalConfirm.textContent = confirmLabel;
+    modalConfirm.className   = 'btn ' + (danger ? 'btn--danger' : 'btn--primary');
+
+    modalBackdrop.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+
+    requestAnimationFrame(() => modalConfirm.focus());
+  });
+}
+
+function closeModal(result) {
+  modalBackdrop.classList.add('hidden');
+  document.body.style.overflow = '';
+
+  const resolve = modalResolve;
+  modalResolve = null;
+
+  if (lastFocused && lastFocused.isConnected) {
+    lastFocused.focus({ preventScroll: true });
+  }
+  lastFocused = null;
+
+  if (resolve) resolve(result);
+}
+
+modalCancel.addEventListener('click', () => closeModal(false));
+modalConfirm.addEventListener('click', () => closeModal(true));
+
+modalBackdrop.addEventListener('mousedown', (e) => {
+  if (e.target === modalBackdrop) closeModal(false);
+});
+
+modalBackdrop.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); closeModal(false); return; }
+  if (e.key !== 'Tab') return;
+
+  const focusables = [...modalBackdrop.querySelectorAll('button:not([disabled])')];
+  if (!focusables.length) return;
+
+  const first = focusables[0];
+  const last  = focusables[focusables.length - 1];
+
+  if (e.shiftKey && document.activeElement === first) {
+    e.preventDefault();
+    last.focus();
+  } else if (!e.shiftKey && document.activeElement === last) {
+    e.preventDefault();
+    first.focus();
+  }
+});
+
+/* ============================================================
+   9. Dropdown menu (wireMenu)
+   ============================================================ */
+function wireMenu(wrap, trigger, { onSelect } = {}) {
+  const menu  = wrap.querySelector('.menu');
+  const items = [...menu.querySelectorAll('[role="menuitem"]')];
+
+  const isOpen = () => wrap.classList.contains('is-open');
+
+  function closeAllExcept(self) {
+    document.querySelectorAll('.is-open').forEach((el) => {
+      if (el !== self) {
+        el.classList.remove('is-open');
+        const t = el.querySelector('[aria-expanded="true"]');
+        if (t) t.setAttribute('aria-expanded', 'false');
+      }
+    });
+  }
+
+  function open() {
+    closeAllExcept(wrap);
+    wrap.classList.add('is-open');
+    trigger.setAttribute('aria-expanded', 'true');
+  }
+
+  function close({ focusTrigger = false } = {}) {
+    wrap.classList.remove('is-open');
+    trigger.setAttribute('aria-expanded', 'false');
+    if (focusTrigger && trigger.isConnected) trigger.focus();
+  }
+
+  // NOTE: no stopPropagation — this lets the doc-level click handler
+  // close other menus correctly.
+  trigger.addEventListener('click', () => {
+    isOpen() ? close() : open();
+  });
+
+  trigger.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      open();
+      items[0]?.focus();
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      open();
+      items[items.length - 1]?.focus();
+    } else if (e.key === 'Escape' && isOpen()) {
+      e.preventDefault();
+      e.stopPropagation();
+      close({ focusTrigger: true });
+    }
+  });
+
+  menu.addEventListener('keydown', (e) => {
+    const i = items.indexOf(document.activeElement);
+    if (i === -1) return;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      items[(i + 1) % items.length].focus();
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      items[(i - 1 + items.length) % items.length].focus();
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      items[0].focus();
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      items[items.length - 1].focus();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
+      close({ focusTrigger: true });
+    } else if (e.key === 'Tab') {
+      close();
+    }
+  });
+
+  items.forEach((item) => {
+    item.addEventListener('click', () => {
+      const cb = onSelect;
+      close({ focusTrigger: true });
+      cb?.(item);
+    });
+  });
+
+  document.addEventListener('click', (e) => {
+    if (isOpen() && !wrap.contains(e.target)) close();
+  });
+
+  wrap.addEventListener('focusout', (e) => {
+    if (!wrap.contains(e.relatedTarget)) close();
+  });
+
+  return { open, close, isOpen, items, trigger, menu };
+}
+
+/* ============================================================
+   10. Context menu
+   ============================================================ */
+const contextMenu = $('contextMenu');
+let contextMenuCleanup = [];
+let lastContextFocus = null;
+
+function showContextMenu(x, y, items) {
+  hideContextMenu({ silent: true });
+
+  contextMenu.innerHTML = '';
+
+  items.forEach((item) => {
+    if (item.type === 'separator') {
+      const sep = document.createElement('div');
+      sep.className = 'context-menu__sep';
+      sep.setAttribute('role', 'separator');
+      contextMenu.appendChild(sep);
+      return;
+    }
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.setAttribute('role', 'menuitem');
+    btn.className = 'context-menu__item' + (item.danger ? ' is-danger' : '');
+    btn.innerHTML =
+      (item.icon || '') +
+      '<span class="context-menu__label">' + escapeHtml(item.label) + '</span>' +
+      (item.shortcut ? '<span class="context-menu__shortcut">' + escapeHtml(item.shortcut) + '</span>' : '');
+
+    btn.addEventListener('click', () => {
+      hideContextMenu();
+      // Let the menu close before the action runs so dialogs see a clean state
+      setTimeout(() => item.action?.(), 0);
+    });
+
+    contextMenu.appendChild(btn);
+  });
+
+  lastContextFocus = document.activeElement;
+
+  contextMenu.setAttribute('aria-hidden', 'false');
+  contextMenu.classList.add('is-open');
+
+  // Position (viewport-relative because position: fixed)
+  contextMenu.style.left = '0px';
+  contextMenu.style.top  = '0px';
+
+  const rect = contextMenu.getBoundingClientRect();
+  const pad  = 8;
+  const vw   = window.innerWidth;
+  const vh   = window.innerHeight;
+
+  let left = x;
+  let top  = y;
+
+  if (left + rect.width + pad > vw)  left = Math.max(pad, vw - rect.width - pad);
+  if (top  + rect.height + pad > vh) top  = Math.max(pad, vh - rect.height - pad);
+
+  contextMenu.style.left = left + 'px';
+  contextMenu.style.top  = top  + 'px';
+
+  // Focus first item for keyboard nav
+  const first = contextMenu.querySelector('.context-menu__item');
+  if (first) first.focus({ preventScroll: true });
+
+  // Dismiss listeners
+  const onDocPointer = (e) => {
+    if (!contextMenu.contains(e.target)) hideContextMenu();
+  };
+  const onDocKey = (e) => {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
+      hideContextMenu({ focusBack: true });
+      return;
+    }
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      const list = [...contextMenu.querySelectorAll('.context-menu__item')];
+      const i = list.indexOf(document.activeElement);
+      if (i === -1) return;
+      const next = e.key === 'ArrowDown'
+        ? (i + 1) % list.length
+        : (i - 1 + list.length) % list.length;
+      list[next].focus();
+      return;
+    }
+    if (e.key === 'Home') {
+      e.preventDefault();
+      contextMenu.querySelector('.context-menu__item')?.focus();
+      return;
+    }
+    if (e.key === 'End') {
+      e.preventDefault();
+      const list = contextMenu.querySelectorAll('.context-menu__item');
+      list[list.length - 1]?.focus();
+      return;
+    }
+    if (e.key === 'Tab') {
+      hideContextMenu();
+    }
+  };
+  const onScroll = () => hideContextMenu();
+  const onResize = () => hideContextMenu();
+
+  document.addEventListener('pointerdown', onDocPointer, true);
+  document.addEventListener('keydown', onDocKey, true);
+  window.addEventListener('scroll', onScroll, true);
+  window.addEventListener('resize', onResize);
+
+  contextMenuCleanup = [
+    () => document.removeEventListener('pointerdown', onDocPointer, true),
+    () => document.removeEventListener('keydown', onDocKey, true),
+    () => window.removeEventListener('scroll', onScroll, true),
+    () => window.removeEventListener('resize', onResize)
+  ];
+}
+
+function hideContextMenu({ focusBack = false, silent = false } = {}) {
+  const wasOpen = contextMenu.classList.contains('is-open');
+  contextMenu.classList.remove('is-open');
+  contextMenu.setAttribute('aria-hidden', 'true');
+
+  contextMenuCleanup.forEach((fn) => fn());
+  contextMenuCleanup = [];
+
+  if (wasOpen && focusBack && lastContextFocus && lastContextFocus.isConnected) {
+    lastContextFocus.focus({ preventScroll: true });
+  }
+  lastContextFocus = null;
+
+  if (!silent) {
+    // Clear items after transition to avoid stale nodes
+    setTimeout(() => {
+      if (!contextMenu.classList.contains('is-open')) contextMenu.innerHTML = '';
+    }, 150);
+  }
+}
+
+/* ============================================================
+   11. DOM refs
+   ============================================================ */
+const listEl      = $('noteList');
+const searchInput = $('searchInput');
+const searchClear = $('searchClear');
+const sortSelect  = $('sortSelect');
+const noteCountEl = $('noteCount');
+const emptyState  = $('emptyState');
+const emptyTitle  = $('emptyTitle');
+const emptyText   = $('emptyText');
+const editorPane  = $('editorPane');
+const titleInput  = $('titleInput');
+const bodyInput   = $('bodyInput');
+const previewPane = $('previewPane');
+const previewBtn  = $('previewBtn');
+const pinBtn      = $('pinBtn');
+const statusDot   = $('statusDot');
+const statusText  = $('statusText');
+const wordCountEl = $('wordCount');
+const importInput = $('importInput');
+
+/* ============================================================
+   12. Sorting & filtering
+   ============================================================ */
+function sortedNotes() {
+  const arr = [...notes];
+  arr.sort((a, b) => {
+    if (!!b.pinned !== !!a.pinned) return b.pinned ? 1 : -1;
+    if (sortMode === 'title')   return titleOf(a).localeCompare(titleOf(b), undefined, { sensitivity: 'base' });
+    if (sortMode === 'created') return b.createdAt - a.createdAt;
+    return b.updatedAt - a.updatedAt;
+  });
+  return arr;
+}
+
+function filteredNotes() {
+  const q = query.trim().toLowerCase();
+  const sorted = sortedNotes();
+  if (!q) return sorted;
+  return sorted.filter((n) =>
+    (n.title || '').toLowerCase().includes(q) ||
+    (n.body  || '').toLowerCase().includes(q)
+  );
+}
+
+/* ============================================================
+   13. Markdown renderer
+   ============================================================ */
+function renderMarkdown(src) {
+  if (!src || !src.trim()) {
+    return '<p class="md-empty">Nothing to preview yet.</p>';
+  }
+
+  const codeBlocks = [];
+  let text = src.replace(/```([\s\S]*?)```/g, (_, code) => {
+    codeBlocks.push(code.replace(/^\n/, ''));
+    return '\u0000CODE' + (codeBlocks.length - 1) + '\u0000';
+  });
+
+  text = escapeHtml(text);
+
+  const lines = text.split('\n');
+  const out = [];
+  let listType = null;
+  let inQuote = false;
+
+  const closeList  = () => { if (listType) { out.push('</' + listType + '>'); listType = null; } };
+  const closeQuote = () => { if (inQuote) { out.push('</blockquote>'); inQuote = false; } };
+
+  for (const line of lines) {
+    const codeMatch = line.match(/^\u0000CODE(\d+)\u0000$/);
+    if (codeMatch) {
+      closeList(); closeQuote();
+      out.push('<pre><code>' + escapeHtml(codeBlocks[+codeMatch[1]]) + '</code></pre>');
+      continue;
+    }
+
+    if (/^\s*([-*_])(?:\s*\1){2,}\s*$/.test(line)) {
+      closeList(); closeQuote();
+      out.push('<hr>');
+      continue;
+    }
+
+    const h = line.match(/^(#{1,6})\s+(.*)$/);
+    if (h) {
+      closeList(); closeQuote();
+      const level = h[1].length;
+      out.push('<h' + level + '>' + inline(h[2]) + '</h' + level + '>');
+      continue;
+    }
+
+    const q = line.match(/^&gt;\s?(.*)$/);
+    if (q) {
+      closeList();
+      if (!inQuote) { out.push('<blockquote>'); inQuote = true; }
+      out.push('<p>' + inline(q[1]) + '</p>');
+      continue;
+    } else {
+      closeQuote();
+    }
+
+    const task = line.match(/^\s*[-*]\s+\[([ xX])\]\s+(.*)$/);
+    if (task) {
+      closeQuote();
+      if (listType !== 'ul') { closeList(); out.push('<ul class="task-list">'); listType = 'ul'; }
+      const checked = task[1].toLowerCase() === 'x' ? ' checked' : '';
+      out.push('<li><input type="checkbox" disabled' + checked + '><span>' + inline(task[2]) + '</span></li>');
+      continue;
+    }
+
+    const ul = line.match(/^\s*[-*]\s+(.*)$/);
+    if (ul) {
+      closeQuote();
+      if (listType !== 'ul') { closeList(); out.push('<ul>'); listType = 'ul'; }
+      out.push('<li>' + inline(ul[1]) + '</li>');
+      continue;
+    }
+
+    const ol = line.match(/^\s*\d+\.\s+(.*)$/);
+    if (ol) {
+      closeQuote();
+      if (listType !== 'ol') { closeList(); out.push('<ol>'); listType = 'ol'; }
+      out.push('<li>' + inline(ol[1]) + '</li>');
+      continue;
+    }
+
+    if (!line.trim()) {
+      closeList(); closeQuote();
+      continue;
+    }
+
+    closeList(); closeQuote();
+    out.push('<p>' + inline(line) + '</p>');
+  }
+
+  closeList(); closeQuote();
+  return out.join('\n');
+
+  function inline(s) {
+    return s
+      .replace(/`([^`]+)`/g, '<code>$1</code>')
+      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+      .replace(/__([^_]+)__/g, '<strong>$1</strong>')
+      .replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, '$1<em>$2</em>')
+      .replace(/(^|[^_])_([^_\n]+)_(?!_)/g, '$1<em>$2</em>')
+      .replace(/~~([^~]+)~~/g, '<del>$1</del>')
+      .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+  }
+}
+
+/* ============================================================
+   14. List rendering
+   ============================================================ */
+const PIN_SVG = '<svg class="note-item__pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+  'stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+  '<path d="M12 17v5"/>' +
+  '<path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/>' +
+  '</svg>';
+
+function updateNoteCount() {
+  noteCountEl.textContent = String(notes.length);
+}
+
+function renderList() {
+  const visible = filteredNotes();
+  const q = query.trim();
+
+  listEl.innerHTML = '';
+  updateNoteCount();
+
+  if (!visible.length) {
+    const li = document.createElement('li');
+    li.className = 'list-empty';
+    li.textContent = q
+      ? 'No notes match your search.'
+      : 'No notes yet. Use “New note” to add one.';
+    listEl.appendChild(li);
+    return;
+  }
+
+  const frag = document.createDocumentFragment();
+
+  visible.forEach((note) => {
+    const li = document.createElement('li');
+    li.setAttribute('role', 'listitem');
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'note-item'
+      + (note.id === activeId ? ' is-active' : '')
+      + (note.pinned ? ' is-pinned' : '');
+    btn.dataset.id = note.id;
+    btn.setAttribute('aria-current', note.id === activeId ? 'true' : 'false');
+
+    btn.innerHTML =
+      '<div class="note-item__top">' +
+        '<span class="note-item__title">' + highlightMatch(titleOf(note), q) + '</span>' +
+        PIN_SVG +
+      '</div>' +
+      '<div class="note-item__preview">' + highlightMatch(previewOf(note), q) + '</div>' +
+      '<div class="note-item__time">' + escapeHtml(formatTime(note.updatedAt)) + '</div>';
+
+    btn.addEventListener('click', () => {
+      if (activeId === note.id) return;
+      selectNote(note.id);
+    });
+
+    li.appendChild(btn);
+    frag.appendChild(li);
+  });
+
+  listEl.appendChild(frag);
+}
+
+function updateListRow(note) {
+  const btn = listEl.querySelector('.note-item[data-id="' + note.id + '"]');
+  if (!btn) return;
+
+  btn.classList.toggle('is-pinned', !!note.pinned);
+  btn.querySelector('.note-item__title').textContent   = titleOf(note);
+  btn.querySelector('.note-item__preview').textContent = previewOf(note);
+  btn.querySelector('.note-item__time').textContent    = formatTime(note.updatedAt);
+}
+
+/* ============================================================
+   15. Editor rendering
+   ============================================================ */
+function renderEditor() {
+  const note = getActiveNote();
+
+  if (!note) {
+    editorPane.classList.add('hidden');
+    emptyState.classList.remove('hidden');
+    emptyTitle.textContent = notes.length ? 'No note selected' : 'No notes yet';
+    emptyText.innerHTML = notes.length
+      ? 'Pick a note from the list, or create a new one with <kbd>⌘N</kbd>.'
+      : 'Create your first note to get started. Everything is saved in your browser.';
+    return;
+  }
+
+  emptyState.classList.add('hidden');
+  editorPane.classList.remove('hidden');
+
+  if (document.activeElement !== titleInput) titleInput.value = note.title;
+  if (document.activeElement !== bodyInput)  bodyInput.value  = note.body;
+
+  pinBtn.classList.toggle('is-on', !!note.pinned);
+  pinBtn.setAttribute('aria-pressed', String(!!note.pinned));
+  pinBtn.setAttribute('aria-label', note.pinned ? 'Unpin note' : 'Pin note');
+  pinBtn.title = note.pinned ? 'Unpin note' : 'Pin note';
+
+  updateWordCount();
+  refreshPreview();
+  setStatus('saved');
+}
+
+function updateWordCount() {
+  const n = countWords(bodyInput.value);
+  wordCountEl.textContent = n === 1 ? '1 word' : n + ' words';
+}
+
+function setStatus(kind, message) {
+  if (kind === 'saving') {
+    statusDot.classList.add('is-saving');
+    statusText.textContent = 'Saving…';
+  } else if (kind === 'error') {
+    statusDot.classList.remove('is-saving');
+    statusText.textContent = message || 'Could not save';
+  } else {
+    statusDot.classList.remove('is-saving');
+    statusText.textContent = message || 'Saved';
+  }
+}
+
+/* ============================================================
+   16. Preview mode
+   ============================================================ */
+function refreshPreview() {
+  if (!previewMode) return;
+  previewPane.innerHTML = renderMarkdown(bodyInput.value);
+}
+
+function applyPreviewMode() {
+  previewBtn.classList.toggle('is-on', previewMode);
+  previewBtn.setAttribute('aria-pressed', String(previewMode));
+  previewBtn.title = previewMode ? 'Edit note (⌘E)' : 'Preview markdown (⌘E)';
+
+  bodyInput.classList.toggle('hidden', previewMode);
+  previewPane.classList.toggle('hidden', !previewMode);
+
+  refreshPreview();
+}
+
+function togglePreview() {
+  if (!getActiveNote()) return;
+  previewMode = !previewMode;
+  applyPreviewMode();
+}
+
+previewBtn.addEventListener('click', togglePreview);
+
+/* ============================================================
+   17. Note actions
+   ============================================================ */
+function selectNote(id) {
+  if (activeId === id) return;
+  activeId = id;
+  renderList();
+  renderEditor();
+}
+
+function createNote(templateKey = 'blank') {
+  const tpl = TEMPLATES[templateKey] || TEMPLATES.blank;
+  const now = Date.now();
+
+  const note = {
+    id: uid(),
+    title: tpl.title,
+    body: tpl.body,
+    pinned: false,
+    createdAt: now,
+    updatedAt: now
+  };
+
+  notes.unshift(note);
+  activeId = note.id;
+
+  persist();
+  renderList();
+  renderEditor();
+
+  requestAnimationFrame(() => {
+    if (tpl.title) {
+      bodyInput.focus();
+      const len = bodyInput.value.length;
+      bodyInput.setSelectionRange(len, len);
+    } else {
+      titleInput.focus();
+    }
+  });
+}
+
+function togglePinNote(id) {
+  const note = notes.find((n) => n.id === id);
+  if (!note) return;
+
+  note.pinned = !note.pinned;
+  note.updatedAt = Date.now();
+
+  persist();
+  renderList();
+  if (activeId === id) renderEditor();
+  toast(note.pinned ? 'Note pinned' : 'Note unpinned');
+}
+
+function duplicateNote(id) {
+  const note = notes.find((n) => n.id === id);
+  if (!note) return;
+
+  const now = Date.now();
+  const copy = {
+    id: uid(),
+    title: note.title ? note.title + ' (copy)' : '',
+    body: note.body,
+    pinned: false,
+    createdAt: now,
+    updatedAt: now
+  };
+
+  const index = notes.findIndex((n) => n.id === id);
+  notes.splice(index + 1, 0, copy);
+  activeId = copy.id;
+
+  persist();
+  renderList();
+  renderEditor();
+  toast('Note duplicated');
+}
+
+async function copyNote(id) {
+  const note = notes.find((n) => n.id === id);
+  if (!note) return;
+
+  const text = titleOf(note) + '\n\n' + (note.body || '');
+
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+    } else {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity  = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      ta.remove();
+    }
+    toast('Copied to clipboard');
+  } catch {
+    toast('Could not copy');
+  }
+}
+
+function downloadNote(note) {
+  if (!note) return;
+  const md = '# ' + titleOf(note) + '\n\n' + (note.body || '');
+  const safeName = titleOf(note)
+    .replace(/[^\w\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+    .toLowerCase() || 'note';
+
+  const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = safeName + '.md';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  toast('Note downloaded');
+}
+
+async function deleteNote(id) {
+  const note = notes.find((n) => n.id === id);
+  if (!note) return;
+
+  const ok = await confirmDialog({
+    title: 'Delete note?',
+    message: '“' + titleOf(note) + '” will be permanently deleted.',
+    confirmLabel: 'Delete'
+  });
+  if (!ok) return;
+
+  const index = notes.findIndex((n) => n.id === id);
+  const [removed] = notes.splice(index, 1);
+  lastDeleted = { note: removed, index };
+
+  const remaining = filteredNotes();
+  activeId = remaining.length ? remaining[0].id : null;
+
+  persist();
+  renderList();
+  renderEditor();
+
+  toast('Note deleted', {
+    action: {
+      label: 'Undo',
+      onClick: () => {
+        if (!lastDeleted) return;
+        const { note: n, index: idx } = lastDeleted;
+        notes.splice(Math.min(idx, notes.length), 0, n);
+        activeId = n.id;
+        lastDeleted = null;
+        persist();
+        renderList();
+        renderEditor();
+        toast('Note restored');
+      }
+    },
+    duration: 6000
+  });
+}
+
+/* ============================================================
+   18. Editing & autosave
+   ============================================================ */
+function scheduleSave({ resort = false } = {}) {
+  setStatus('saving');
+
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    const ok = persist();
+    setStatus(ok ? 'saved' : 'error', ok ? 'Saved' : 'Could not save');
+  }, SAVE_DELAY);
+
+  if (resort) {
+    clearTimeout(listResortTimer);
+    listResortTimer = setTimeout(() => {
+      if (sortMode === 'title') return;
+      if (document.activeElement && (document.activeElement === titleInput || document.activeElement === bodyInput)) return;
+      renderList();
+    }, 1400);
+  }
+}
+
+function handleEdit(field, value) {
+  const note = getActiveNote();
+  if (!note) return;
+
+  note[field] = value;
+  note.updatedAt = Date.now();
+
+  if (query.trim()) {
+    renderList();
+  } else {
+    updateListRow(note);
+  }
+
+  if (field === 'body') {
+    updateWordCount();
+    if (previewMode) refreshPreview();
+  }
+
+  scheduleSave({ resort: true });
+}
+
+titleInput.addEventListener('input', () => handleEdit('title', titleInput.value));
+bodyInput.addEventListener('input',  () => handleEdit('body',  bodyInput.value));
+
+function flushSave() {
+  clearTimeout(saveTimer);
+  persist();
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') flushSave();
+});
+
+window.addEventListener('beforeunload', flushSave);
+
+/* ============================================================
+   19. Split button (New note)
+   ============================================================ */
+const newNoteSplit  = $('newNoteSplit');
+const newNoteBtn    = $('newNoteBtn');
+const newNoteToggle = $('newNoteToggle');
+
+wireMenu(newNoteSplit, newNoteToggle, {
+  onSelect: (item) => createNote(item.dataset.template || 'blank')
+});
+
+newNoteBtn.addEventListener('click', () => createNote('blank'));
+
+/* ============================================================
+   20. Editor "more" menu + pin button
+   ============================================================ */
+wireMenu($('moreWrap'), $('moreBtn'), {
+  onSelect: (item) => {
+    switch (item.id) {
+      case 'dupBtn':       duplicateNote(activeId);          break;
+      case 'copyBtn':      copyNote(activeId);               break;
+      case 'exportOneBtn': downloadNote(getActiveNote());    break;
+      case 'deleteBtn':    deleteNote(activeId);             break;
+    }
+  }
+});
+
+pinBtn.addEventListener('click', () => togglePinNote(activeId));
+
+/* ============================================================
+   21. App menu (export / import / clear)
+   ============================================================ */
+wireMenu($('appMenuWrap'), $('appMenuBtn'), {
+  onSelect: (item) => {
+    switch (item.id) {
+      case 'exportAllBtn': exportAllNotes();     break;
+      case 'importBtn':    importInput.click();  break;
+      case 'clearAllBtn':  clearAllNotes();      break;
+    }
+  }
+});
+
+function exportAllNotes() {
+  if (!notes.length) { toast('No notes to export'); return; }
+
+  const payload = { version: 3, exportedAt: new Date().toISOString(), notes };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = 'notes-' + new Date().toISOString().slice(0, 10) + '.json';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+
+  toast('Exported ' + notes.length + (notes.length === 1 ? ' note' : ' notes'));
+}
+
+importInput.addEventListener('change', async () => {
+  const file = importInput.files && importInput.files[0];
+  importInput.value = '';
+  if (!file) return;
+
+  try {
+    const text   = await file.text();
+    const parsed = JSON.parse(text);
+    const incoming = Array.isArray(parsed)
+      ? parsed
+      : (parsed && Array.isArray(parsed.notes) ? parsed.notes : null);
+    if (!incoming) throw new Error('Invalid format');
+
+    const existingIds = new Set(notes.map((n) => n.id));
+    let added = 0;
+
+    incoming.forEach((raw) => {
+      if (!raw || typeof raw !== 'object') return;
+      const now = Date.now();
+      let id = typeof raw.id === 'string' && raw.id ? raw.id : uid();
+      if (existingIds.has(id)) id = uid();
+      existingIds.add(id);
+
+      notes.push({
+        id,
+        title:     typeof raw.title === 'string' ? raw.title : '',
+        body:      typeof raw.body  === 'string' ? raw.body  : '',
+        pinned:    !!raw.pinned,
+        createdAt: Number(raw.createdAt) || now,
+        updatedAt: Number(raw.updatedAt) || now
+      });
+      added++;
+    });
+
+    if (!added) { toast('No valid notes found'); return; }
+
+    if (!activeId) activeId = sortedNotes()[0].id;
+
+    persist();
+    renderList();
+    renderEditor();
+    toast('Imported ' + added + (added === 1 ? ' note' : ' notes'));
+  } catch {
+    toast('Could not read that file');
+  }
+});
+
+async function clearAllNotes() {
+  if (!notes.length) { toast('No notes to delete'); return; }
+
+  const ok = await confirmDialog({
+    title: 'Delete all notes?',
+    message: 'All ' + notes.length + ' notes will be permanently removed.',
+    confirmLabel: 'Delete all'
+  });
+  if (!ok) return;
+
+  notes = [];
+  activeId = null;
+  lastDeleted = null;
+
+  persist();
+  renderList();
+  renderEditor();
+  toast('All notes deleted');
+}
+
+/* ============================================================
+   22. Search
+   ============================================================ */
+searchInput.addEventListener('input', () => {
+  query = searchInput.value;
+  searchClear.classList.toggle('hidden', !query);
+  renderList();
+});
+
+searchClear.addEventListener('click', () => {
+  searchInput.value = '';
+  query = '';
+  searchClear.classList.add('hidden');
+  renderList();
+  searchInput.focus();
+});
+
+searchInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    e.preventDefault();
+    if (query) {
+      searchInput.value = '';
+      query = '';
+      searchClear.classList.add('hidden');
+      renderList();
+    } else {
+      searchInput.blur();
+    }
+  } else if (e.key === 'Enter') {
+    const first = listEl.querySelector('.note-item');
+    if (first) {
+      first.click();
+      first.focus();
+    }
+  }
+});
+
+/* ============================================================
+   23. Sort
+   ============================================================ */
+try {
+  const stored = localStorage.getItem(SORT_KEY);
+  if (stored && ['updated', 'created', 'title'].includes(stored)) sortMode = stored;
+} catch {}
+
+sortSelect.value = sortMode;
+
+sortSelect.addEventListener('change', () => {
+  sortMode = sortSelect.value;
+  try { localStorage.setItem(SORT_KEY, sortMode); } catch {}
+  renderList();
+});
+
+/* ============================================================
+   24. List keyboard navigation
+   ============================================================ */
+listEl.addEventListener('keydown', (e) => {
+  if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+
+  const items = [...listEl.querySelectorAll('.note-item')];
+  const i = items.indexOf(document.activeElement);
+  if (i === -1) return;
+
+  e.preventDefault();
+  const next = e.key === 'ArrowDown' ? items[i + 1] : items[i - 1];
+  if (next) {
+    next.focus();
+    next.click();
+  }
+});
+
+/* ============================================================
+   25. Context menu — right-click + long-press
+   ============================================================ */
+function showNoteContextMenu(x, y, noteId) {
+  const note = notes.find((n) => n.id === noteId);
+  if (!note) return;
+
+  showContextMenu(x, y, [
+    { label: 'Open',  icon: ICON.open, action: () => selectNote(noteId) },
+    {
+      label: note.pinned ? 'Unpin' : 'Pin',
+      icon: ICON.pin,
+      action: () => togglePinNote(noteId)
+    },
+    { type: 'separator' },
+    { label: 'Duplicate',         icon: ICON.duplicate, shortcut: IS_MAC ? '⌘D' : 'Ctrl+D', action: () => duplicateNote(noteId) },
+    { label: 'Copy to clipboard', icon: ICON.copy,      action: () => copyNote(noteId) },
+    { label: 'Download as .md',   icon: ICON.download,  action: () => downloadNote(note) },
+    { type: 'separator' },
+    { label: 'Delete', icon: ICON.del, danger: true, action: () => deleteNote(noteId) }
+  ]);
+}
+
+function showListEmptyContextMenu(x, y) {
+  showContextMenu(x, y, [
+    { label: 'New note',       icon: ICON.newNote, shortcut: IS_MAC ? '⌘N' : 'Ctrl+N', action: () => createNote('blank') },
+    { label: 'Meeting notes',  icon: ICON.meeting, action: () => createNote('meeting') },
+    { label: 'To-do list',     icon: ICON.todo,    action: () => createNote('todo') },
+    { label: 'Idea',           icon: ICON.idea,    action: () => createNote('idea') },
+    { type: 'separator' },
+    { label: 'Export all notes', icon: ICON.download, action: exportAllNotes },
+    { label: 'Import notes…',    icon: ICON.upload,   action: () => importInput.click() }
+  ]);
+}
+
+function showEditorContextMenu(x, y) {
+  const note = getActiveNote();
+  if (!note) return;
+
+  showContextMenu(x, y, [
+    {
+      label: previewMode ? 'Edit note' : 'Preview markdown',
+      icon: previewMode ? ICON.edit : ICON.eye,
+      shortcut: IS_MAC ? '⌘E' : 'Ctrl+E',
+      action: togglePreview
+    },
+    { type: 'separator' },
+    { label: 'Duplicate',         icon: ICON.duplicate, shortcut: IS_MAC ? '⌘D' : 'Ctrl+D', action: () => duplicateNote(note.id) },
+    { label: 'Copy to clipboard', icon: ICON.copy,      action: () => copyNote(note.id) },
+    { label: 'Download as .md',   icon: ICON.download,  action: () => downloadNote(note) },
+    { type: 'separator' },
+    { label: 'Delete note', icon: ICON.del, danger: true, action: () => deleteNote(note.id) }
+  ]);
+}
+
+/* ---- Right-click handlers ---- */
+
+listEl.addEventListener('contextmenu', (e) => {
+  const item = e.target.closest('.note-item');
+  e.preventDefault();
+
+  // Browser's own contextmenu may fire after a touch long-press on some devices —
+  // don't double-open.
+  if (contextMenu.classList.contains('is-open')) return;
+
+  if (item) {
+    showNoteContextMenu(e.clientX, e.clientY, item.dataset.id);
+  } else {
+    showListEmptyContextMenu(e.clientX, e.clientY);
+  }
+});
+
+$('editorPane').addEventListener('contextmenu', (e) => {
+  // Let native menu show in inputs so cut/copy/paste still work
+  if (e.target.closest('input, textarea')) return;
+  e.preventDefault();
+  if (contextMenu.classList.contains('is-open')) return;
+  showEditorContextMenu(e.clientX, e.clientY);
+});
+
+// Prevent accidental native menu elsewhere in the app
+document.addEventListener('contextmenu', (e) => {
+  if (e.target.closest('.menu, .modal-backdrop, .toast-stack, input, textarea')) return;
+  if (e.target.closest('.sidebar__head, .editor')) e.preventDefault();
+});
+
+/* ---- Long-press (touch) handler ---- */
+
+let lpTimer = null;
+let lpStart = null;
+let lpFiredAt = 0;
+
+document.addEventListener('pointerdown', (e) => {
+  if (e.pointerType !== 'touch') return;
+  const item = e.target.closest('.note-item');
+  if (!item) return;
+
+  lpStart = { x: e.clientX, y: e.clientY, id: item.dataset.id };
+  clearTimeout(lpTimer);
+
+  lpTimer = setTimeout(() => {
+    lpFiredAt = Date.now();
+    if (navigator.vibrate) { try { navigator.vibrate(8); } catch {} }
+    showNoteContextMenu(lpStart.x, lpStart.y, lpStart.id);
+  }, 480);
+}, { passive: true });
+
+document.addEventListener('pointermove', (e) => {
+  if (!lpTimer || !lpStart) return;
+  const dx = e.clientX - lpStart.x;
+  const dy = e.clientY - lpStart.y;
+  if (Math.hypot(dx, dy) > 8) {
+    clearTimeout(lpTimer);
+    lpTimer = null;
+    lpStart = null;
+  }
+}, { passive: true });
+
+document.addEventListener('pointerup', () => {
+  clearTimeout(lpTimer);
+  lpTimer = null;
+  lpStart = null;
+}, { passive: true });
+
+document.addEventListener('pointercancel', () => {
+  clearTimeout(lpTimer);
+  lpTimer = null;
+  lpStart = null;
+}, { passive: true });
+
+// Suppress the click that follows a long-press
+document.addEventListener('click', (e) => {
+  if (lpFiredAt && Date.now() - lpFiredAt < 600) {
+    e.preventDefault();
+    e.stopPropagation();
+    lpFiredAt = 0;
+  }
+}, true);
+
+/* ============================================================
+   26. Global keyboard shortcuts
+   ============================================================ */
+function isTypingTarget(el) {
+  if (!el) return false;
+  const tag = el.tagName;
+  return tag === 'INPUT' || tag === 'TEXTAREA' || el.isContentEditable;
+}
+
+document.addEventListener('keydown', (e) => {
+  // Modal handles its own keys
+  if (!modalBackdrop.classList.contains('hidden')) return;
+  // Context menu has its own key handling
+  if (contextMenu.classList.contains('is-open')) return;
+  // Don't re-handle something a nested handler already consumed
+  if (e.defaultPrevented) return;
+
+  const mod = e.metaKey || e.ctrlKey;
+
+  // ⌘N — new blank note
+  if (mod && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'n') {
+    e.preventDefault();
+    createNote('blank');
+    return;
+  }
+
+  // ⌘K — focus search
+  if (mod && e.key.toLowerCase() === 'k') {
+    e.preventDefault();
+    searchInput.focus();
+    searchInput.select();
+    return;
+  }
+
+  // ⌘S — force save
+  if (mod && e.key.toLowerCase() === 's') {
+    e.preventDefault();
+    flushSave();
+    setStatus('saved');
+    toast('Saved');
+    return;
+  }
+
+  // ⌘D — duplicate active note
+  if (mod && e.key.toLowerCase() === 'd') {
+    e.preventDefault();
+    if (activeId) duplicateNote(activeId);
+    return;
+  }
+
+  // ⌘E — toggle preview
+  if (mod && e.key.toLowerCase() === 'e') {
+    e.preventDefault();
+    togglePreview();
+    return;
+  }
+
+  // Escape — close dropdowns / blur inputs
+  if (e.key === 'Escape') {
+    const hadOpen = document.querySelector('.is-open');
+    if (hadOpen) {
+      document.querySelectorAll('.is-open').forEach((el) => el.classList.remove('is-open'));
+      document.querySelectorAll('[aria-expanded="true"]').forEach((el) => el.setAttribute('aria-expanded', 'false'));
+    }
+    if (isTypingTarget(document.activeElement) && document.activeElement !== searchInput) {
+      document.activeElement.blur();
+    }
+  }
+});
+
+/* ============================================================
+   27. Live relative timestamps
+   ============================================================ */
+setInterval(() => {
+  if (document.visibilityState !== 'visible') return;
+  listEl.querySelectorAll('.note-item').forEach((btn) => {
+    const note = notes.find((n) => n.id === btn.dataset.id);
+    if (!note) return;
+    const el = btn.querySelector('.note-item__time');
+    if (el) el.textContent = formatTime(note.updatedAt);
+  });
+}, 60_000);
+
+/* ============================================================
+   28. Boot
+   ============================================================ */
+function init() {
+  initTheme();
+
+  notes = loadNotes();
+  const sorted = sortedNotes();
+  activeId = sorted.length ? sorted[0].id : null;
+
+  applyPreviewMode();
+  renderList();
+  renderEditor();
+}
+
+init();
+</script>
+</body>
+</html>
