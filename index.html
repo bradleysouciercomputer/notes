@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
 <title>Notes</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232563eb'/%3E%3Cpath d='M10 8h9l4 4v12a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2V10a2 2 0 0 1 2-2z' fill='%23fff'/%3E%3Cpath d='M19 8v4h4' fill='none' stroke='%232563eb' stroke-width='1.5'/%3E%3Cpath d='M12 16h7M12 20h5' stroke='%232563eb' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E">
 <style>
   :root {
     --accent: #2563eb;
@@ -26,6 +27,7 @@
     --shadow-lg: 0 10px 25px -5px rgba(15, 23, 42, .25);
     --ripple-light: rgba(255, 255, 255, .5);
     --ripple-surface: rgba(37, 99, 235, .22);
+    --sidebar-w: 320px;
   }
 
   [data-theme="dark"] {
@@ -75,51 +77,61 @@
 
   /* ============================================================
      App shell
-     Fix: keep the sidebar as a grid item in focus mode (shrunk to
-     0px and faded out) so the editor stays in the second track.
-     Using display:none removed it from the grid entirely, which
-     caused auto-placement to put the editor in the 0px column.
      ============================================================ */
   .app {
     display: grid;
-    grid-template-columns: 320px minmax(0, 1fr);
+    grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
     height: 100vh;
     height: 100dvh;
     overflow: hidden;
     transition: grid-template-columns .22s ease;
   }
 
-  .app.is-focus {
-    grid-template-columns: 0px minmax(0, 1fr);
-  }
+  .app.is-focus { grid-template-columns: 0px minmax(0, 1fr); }
+  .app.is-resizing { transition: none; }
 
-  /* Sidebar */
+  /* ============================================================
+     Sidebar
+     ============================================================ */
   .sidebar {
+    position: relative;
     display: flex;
     flex-direction: column;
     min-height: 0;
-    min-width: 0;             /* essential: allow shrinking to 0px */
-    overflow: hidden;         /* clip content while collapsing */
+    min-width: 0;
+    overflow: hidden;
     background: var(--surface);
     border-right: 1px solid var(--border);
-    transition:
-      background-color .2s ease,
-      border-color .2s ease,
-      opacity .22s ease;
+    transition: background-color .2s ease, border-color .2s ease, opacity .22s ease;
   }
 
   .app.is-focus .sidebar {
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
-    /* Delay the visibility change so the fade-out is actually visible */
-    transition:
-      background-color .2s ease,
-      border-color .2s ease,
-      opacity .22s ease,
-      visibility 0s linear .22s;
+    transition: background-color .2s ease, border-color .2s ease, opacity .22s ease, visibility 0s linear .22s;
   }
 
+  /* Resize handle */
+  .resize-handle {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 5px;
+    cursor: col-resize;
+    z-index: 25;
+    background: transparent;
+    transition: background-color .15s ease;
+    touch-action: none;
+  }
+
+  .resize-handle:hover,
+  .resize-handle.is-active { background: var(--accent); opacity: .5; }
+
+  .app.is-focus .resize-handle { display: none; }
+
+  /* Sidebar head */
   .sidebar__head {
     padding: 14px 14px 10px;
     display: flex;
@@ -134,16 +146,48 @@
     gap: 8px;
   }
 
-  .sidebar__title {
+  /* Brand / logo */
+  .brand {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin: 0;
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: .08em;
+    gap: 9px;
+    min-width: 0;
+  }
+
+  .brand__mark {
+    flex: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, .28);
+    display: block;
+  }
+
+  .brand__text {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .brand__name {
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: -.02em;
+    color: var(--text);
+    line-height: 1.1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .brand__tag {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .09em;
     text-transform: uppercase;
-    color: var(--text-muted);
+    color: var(--text-faint);
+    line-height: 1;
   }
 
   .badge {
@@ -159,11 +203,12 @@
     color: var(--text-muted);
     background: var(--surface-2);
     border-radius: 999px;
+    flex: none;
   }
 
   .badge--danger { color: var(--danger); background: var(--danger-soft); }
 
-  .sidebar__actions { display: flex; align-items: center; gap: 4px; }
+  .sidebar__actions { display: flex; align-items: center; gap: 4px; flex: none; }
 
   /* Search */
   .search { position: relative; display: flex; align-items: center; }
@@ -215,8 +260,60 @@
   .search__clear:hover { color: var(--text); background: var(--surface-2); }
   .search__clear svg { width: 12px; height: 12px; }
 
-  /* Sort row */
-  .sidebar__controls { display: flex; align-items: center; gap: 8px; }
+  /* Tag bar */
+  .tag-bar {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 14px 2px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .tag-bar::-webkit-scrollbar { display: none; }
+
+  .tag-chip {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 9px;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: var(--surface-2);
+    border: 1px solid transparent;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: color .13s ease, background-color .13s ease, border-color .13s ease;
+    white-space: nowrap;
+    position: relative;
+    overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .tag-chip:hover { color: var(--accent); }
+
+  .tag-chip.is-on {
+    color: #fff;
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .tag-chip__count {
+    font-size: 10px;
+    font-weight: 700;
+    opacity: .75;
+  }
+
+  /* Sort + goal row */
+  .sidebar__controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
 
   .select { position: relative; flex: 1; display: flex; align-items: center; }
 
@@ -247,6 +344,55 @@
   .select select:hover { border-color: var(--border-strong); }
   .select select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37, 99, 235, .15); }
 
+  /* Daily goal */
+  .goal {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 9px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    cursor: pointer;
+    transition: border-color .15s ease;
+    position: relative;
+    overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .goal:hover { border-color: var(--border-strong); }
+
+  .goal__ring {
+    flex: none;
+    width: 20px;
+    height: 20px;
+  }
+
+  .goal__ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+
+  .goal__ring circle {
+    fill: none;
+    stroke-width: 3;
+    transition: stroke-dashoffset .35s ease;
+  }
+
+  .goal__ring .ring-bg { stroke: var(--border); }
+
+  .goal__ring .ring-fill {
+    stroke: var(--accent);
+    stroke-linecap: round;
+  }
+
+  .goal__ring.is-done .ring-fill { stroke: var(--success); }
+
+  .goal__text {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+
   /* Note list */
   .note-list {
     flex: 1;
@@ -270,6 +416,7 @@
     cursor: pointer;
     transition: background-color .13s ease;
     position: relative;
+    overflow: hidden;
   }
 
   .note-item::before {
@@ -294,12 +441,40 @@
     box-shadow: inset 0 0 0 1px rgba(37, 99, 235, .28);
   }
 
+  .note-item.is-selected {
+    background: var(--accent-soft);
+    box-shadow: inset 0 0 0 1px var(--accent);
+  }
+
   .note-item__top {
     display: flex;
     align-items: center;
     gap: 6px;
     margin-bottom: 3px;
   }
+
+  .note-item__check {
+    display: none;
+    flex: none;
+    width: 15px;
+    height: 15px;
+    border: 1.5px solid var(--border-strong);
+    border-radius: 4px;
+    background: var(--surface);
+    place-items: center;
+    transition: background-color .1s ease, border-color .1s ease;
+  }
+
+  .app.is-selecting .note-item__check { display: grid; }
+
+  .note-item.is-selected .note-item__check {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .note-item__check svg { width: 9px; height: 9px; color: #fff; opacity: 0; }
+
+  .note-item.is-selected .note-item__check svg { opacity: 1; }
 
   .note-item__title {
     flex: 1;
@@ -384,7 +559,37 @@
 
   .trash-banner button:hover { background: var(--danger-soft); }
 
-  /* Split button */
+  /* Selection bar */
+  .selection-bar {
+    display: none;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 10px;
+    margin: 0 10px 6px;
+    background: var(--accent-soft);
+    border-radius: 8px;
+  }
+
+  .app.is-selecting .selection-bar { display: flex; }
+
+  .selection-bar__count {
+    flex: 1;
+    min-width: 0;
+    padding-left: 4px;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--accent);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .selection-bar .icon-btn { width: 30px; height: 30px; }
+  .selection-bar .icon-btn svg { width: 14px; height: 14px; }
+
+  /* ============================================================
+     Split button
+     ============================================================ */
   .split-button {
     position: relative;
     display: inline-flex;
@@ -426,7 +631,9 @@
   .split-button.is-open .split-button__toggle { background: var(--accent-hover); border-color: var(--accent-hover); }
   .split-button.is-open .split-button__toggle svg { transform: rotate(180deg); }
 
-  /* Dropdown menu */
+  /* ============================================================
+     Dropdown menu
+     ============================================================ */
   .menu-wrap { position: relative; display: inline-flex; }
 
   .menu {
@@ -500,12 +707,15 @@
     color: var(--text-faint);
   }
 
-  /* Ripple hosts */
+  /* ============================================================
+     Ripple hosts
+     ============================================================ */
   .icon-btn, .btn, .split-button button,
   .menu [role="menuitem"], .note-item, .toast__action,
   .search__clear, .context-menu__item, .toolbar__btn,
   .quick-switcher__item, .trash-banner button,
-  .context-menu__swatch, .focus-exit {
+  .context-menu__swatch, .focus-exit, .tag-chip, .info-link,
+  .goal, .stats-card {
     position: relative;
     overflow: hidden;
     -webkit-tap-highlight-color: transparent;
@@ -530,7 +740,9 @@
     to { transform: scale(1); opacity: 0; }
   }
 
-  /* Editor */
+  /* ============================================================
+     Editor
+     ============================================================ */
   .editor {
     display: flex;
     flex-direction: column;
@@ -618,10 +830,23 @@
     background: var(--border);
   }
 
-  .editor__scroll { flex: 1; min-height: 0; display: flex; }
+  /* Main row: scroll + info panel */
+  .editor__main {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+  }
+
+  .editor__scroll {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+  }
 
   .editor__body, .editor__preview {
     flex: 1;
+    min-width: 0;
     min-height: 0;
     overflow-y: auto;
     padding: 20px;
@@ -640,6 +865,137 @@
 
   .editor__body::placeholder { color: var(--text-faint); }
 
+  /* Info panel */
+  .info-panel {
+    flex: none;
+    width: 280px;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    background: var(--surface-2);
+    border-left: 1px solid var(--border);
+    transition: width .2s ease, opacity .2s ease, border-left-width .2s ease;
+    overflow: hidden;
+  }
+
+  .info-panel:not(.is-open) {
+    width: 0;
+    border-left-width: 0;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .info-panel__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .info-panel__title {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .info-panel__body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 14px;
+  }
+
+  .info-section { margin-bottom: 20px; }
+  .info-section:last-child { margin-bottom: 0; }
+
+  .info-section__title {
+    margin: 0 0 8px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+  }
+
+  .info-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .info-stat {
+    padding: 8px 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+
+  .info-stat__value {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -.01em;
+  }
+
+  .info-stat__label {
+    margin-top: 1px;
+    font-size: 10.5px;
+    color: var(--text-faint);
+  }
+
+  .info-link {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    width: 100%;
+    padding: 7px 9px;
+    margin-bottom: 4px;
+    font-size: 13px;
+    font-weight: 500;
+    text-align: left;
+    color: var(--text);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    cursor: pointer;
+    transition: color .12s ease, border-color .12s ease;
+  }
+
+  .info-link:last-child { margin-bottom: 0; }
+
+  .info-link:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .info-link svg { flex: none; width: 13px; height: 13px; color: var(--text-faint); }
+  .info-link:hover svg { color: var(--accent); }
+
+  .info-link__label {
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .info-empty {
+    font-size: 12.5px;
+    color: var(--text-faint);
+    font-style: italic;
+  }
+
+  .info-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  /* Editor foot */
   .editor__foot {
     display: flex;
     align-items: center;
@@ -747,6 +1103,50 @@
     border-top: 1px solid var(--border);
   }
 
+  /* Tables */
+  .editor__preview table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0 0 1em;
+    font-size: .93em;
+  }
+
+  .editor__preview th, .editor__preview td {
+    padding: 7px 10px;
+    text-align: left;
+    border: 1px solid var(--border);
+    vertical-align: top;
+  }
+
+  .editor__preview th {
+    background: var(--surface-2);
+    font-weight: 700;
+  }
+
+  /* Wiki links */
+  .editor__preview .wikilink {
+    display: inline-block;
+    padding: 0 6px;
+    color: var(--accent);
+    background: var(--accent-soft);
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: .95em;
+    cursor: pointer;
+  }
+
+  .editor__preview .wikilink:hover {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .editor__preview .wikilink.is-missing {
+    color: var(--text-muted);
+    background: var(--surface-2);
+    text-decoration: line-through;
+  }
+
   .md-empty {
     margin: 0;
     font-size: 14px;
@@ -766,7 +1166,13 @@
     text-align: center;
   }
 
-  .editor__empty svg { width: 40px; height: 40px; color: var(--border-strong); }
+  .editor__empty__logo {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    box-shadow: 0 6px 20px rgba(37, 99, 235, .2);
+    margin-bottom: 4px;
+  }
 
   .editor__empty h2 {
     margin: 0;
@@ -837,7 +1243,7 @@
   [data-theme="dark"] .icon-sun { display: none; }
   html:not([data-theme="dark"]) .icon-moon { display: none; }
 
-  /* Floating focus-mode exit button */
+  /* Floating focus exit */
   .focus-exit {
     position: fixed;
     top: 16px;
@@ -851,7 +1257,9 @@
 
   .app.is-focus .focus-exit.is-shown { display: grid; }
 
-  /* Context menu */
+  /* ============================================================
+     Context menu
+     ============================================================ */
   .context-menu {
     position: fixed;
     left: 0; top: 0;
@@ -936,7 +1344,6 @@
     background: var(--border);
   }
 
-  /* Color swatch row */
   .context-menu__colors {
     display: flex;
     align-items: center;
@@ -980,7 +1387,9 @@
     border: 1px solid var(--border-strong);
   }
 
-  /* Quick switcher */
+  /* ============================================================
+     Quick switcher + Command palette (shared)
+     ============================================================ */
   .quick-backdrop {
     position: fixed;
     inset: 0;
@@ -1065,6 +1474,24 @@
     color: var(--accent);
   }
 
+  .quick-switcher__icon {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    background: var(--surface-2);
+    border-radius: 7px;
+    color: var(--text-muted);
+  }
+
+  .quick-switcher__item.is-focused .quick-switcher__icon {
+    background: var(--surface);
+    color: var(--accent);
+  }
+
+  .quick-switcher__icon svg { width: 15px; height: 15px; }
+
   .quick-switcher__text { flex: 1; min-width: 0; }
 
   .quick-switcher__title {
@@ -1087,6 +1514,15 @@
 
   .quick-switcher__item.is-focused .quick-switcher__meta { color: var(--accent); opacity: .8; }
 
+  .quick-switcher__shortcut {
+    flex: none;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-faint);
+  }
+
+  .quick-switcher__item.is-focused .quick-switcher__shortcut { color: var(--accent); }
+
   .quick__hint {
     padding: 8px 14px;
     font-size: 11.5px;
@@ -1108,7 +1544,9 @@
     border-radius: 3px;
   }
 
-  /* Toast */
+  /* ============================================================
+     Toast
+     ============================================================ */
   .toast-stack {
     position: fixed;
     left: 50%;
@@ -1169,7 +1607,9 @@
     to { opacity: 0; transform: translateY(8px) scale(.98); }
   }
 
-  /* Modal */
+  /* ============================================================
+     Modal
+     ============================================================ */
   .modal-backdrop {
     position: fixed;
     inset: 0;
@@ -1253,6 +1693,119 @@
 
   .btn--primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
 
+  /* Stats modal */
+  .stats-modal {
+    width: 100%;
+    max-width: 540px;
+    max-height: 82vh;
+    overflow-y: auto;
+    padding: 26px;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 14px;
+    box-shadow: var(--shadow-lg);
+    animation: modal-in .18s cubic-bezier(.2, .8, .3, 1);
+  }
+
+  .stats-modal__head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .stats-modal__logo {
+    flex: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 11px;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, .25);
+  }
+
+  .stats-modal__titles { flex: 1; min-width: 0; }
+
+  .stats-modal__title {
+    margin: 0;
+    font-size: 19px;
+    font-weight: 800;
+    letter-spacing: -.02em;
+  }
+
+  .stats-modal__sub {
+    margin: 2px 0 0;
+    font-size: 12.5px;
+    color: var(--text-muted);
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 10px;
+    margin-bottom: 22px;
+  }
+
+  .stats-card {
+    padding: 14px 16px;
+    background: var(--surface-2);
+    border-radius: 10px;
+  }
+
+  .stats-card__value {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -.02em;
+    color: var(--accent);
+    line-height: 1.1;
+  }
+
+  .stats-card__label {
+    margin-top: 3px;
+    font-size: 11.5px;
+    font-weight: 500;
+    color: var(--text-muted);
+  }
+
+  .stats-section { margin-bottom: 22px; }
+  .stats-section:last-of-type { margin-bottom: 8px; }
+
+  .stats-section__title {
+    margin: 0 0 10px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+  }
+
+  .stats-list { margin: 0; padding: 0; list-style: none; }
+
+  .stats-list li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    margin-bottom: 4px;
+    font-size: 13px;
+    color: var(--text);
+    background: var(--surface-2);
+    border-radius: 8px;
+  }
+
+  .stats-list li strong {
+    flex: 1;
+    min-width: 0;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .stats-list li span {
+    flex: none;
+    font-size: 12px;
+    color: var(--text-faint);
+  }
+
   @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 
   @keyframes modal-in {
@@ -1260,16 +1813,22 @@
     to   { opacity: 1; transform: translateY(0) scale(1); }
   }
 
-  /* Scrollbars */
+  /* ============================================================
+     Scrollbars
+     ============================================================ */
   .note-list::-webkit-scrollbar,
   .editor__body::-webkit-scrollbar,
   .editor__preview::-webkit-scrollbar,
-  .quick__list::-webkit-scrollbar { width: 10px; }
+  .quick__list::-webkit-scrollbar,
+  .info-panel__body::-webkit-scrollbar,
+  .stats-modal::-webkit-scrollbar { width: 10px; }
 
   .note-list::-webkit-scrollbar-thumb,
   .editor__body::-webkit-scrollbar-thumb,
   .editor__preview::-webkit-scrollbar-thumb,
-  .quick__list::-webkit-scrollbar-thumb {
+  .quick__list::-webkit-scrollbar-thumb,
+  .info-panel__body::-webkit-scrollbar-thumb,
+  .stats-modal::-webkit-scrollbar-thumb {
     background: var(--border);
     border: 3px solid var(--surface);
     border-radius: 10px;
@@ -1278,11 +1837,17 @@
   .note-list::-webkit-scrollbar-thumb:hover,
   .editor__body::-webkit-scrollbar-thumb:hover,
   .editor__preview::-webkit-scrollbar-thumb:hover,
-  .quick__list::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
+  .quick__list::-webkit-scrollbar-thumb:hover,
+  .info-panel__body::-webkit-scrollbar-thumb:hover,
+  .stats-modal::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
 
   /* ============================================================
-     Responsive — on mobile the sidebar is stacked above the editor,
-     so focus mode collapses the first ROW to 0px instead of a column.
+     Print title
+     ============================================================ */
+  .print-title { display: none; }
+
+  /* ============================================================
+     Responsive
      ============================================================ */
   @media (max-width: 760px) {
     .app {
@@ -1297,12 +1862,29 @@
     }
 
     .sidebar { border-right: none; border-bottom: 1px solid var(--border); }
+    .resize-handle { display: none; }
+
     .editor__bar { padding: 12px 16px 10px; }
     .editor__title { font-size: 18px; }
     .editor__body, .editor__preview { padding: 16px; }
     .editor__foot { padding: 8px 16px 11px; }
     .toolbar { padding: 6px 10px; }
     .editor__stats span:first-child { display: none; }
+
+    .info-panel {
+      position: absolute;
+      top: 0; right: 0; bottom: 0;
+      width: 85vw;
+      max-width: 320px;
+      z-index: 30;
+      box-shadow: var(--shadow-lg);
+      opacity: 1;
+    }
+
+    .info-panel:not(.is-open) {
+      width: 0;
+      opacity: 0;
+    }
   }
 
   /* Print */
@@ -1310,7 +1892,8 @@
     body { background: #fff; color: #000; }
     .sidebar, .editor__bar, .toolbar, .editor__foot,
     .toast-stack, .modal-backdrop, .context-menu,
-    .quick-backdrop, .focus-exit { display: none !important; }
+    .quick-backdrop, .focus-exit, .info-panel,
+    .selection-bar, .trash-banner, .print-title + * { display: none !important; }
     .app {
       display: block;
       height: auto;
@@ -1319,6 +1902,7 @@
     }
     .editor { display: block; }
     .editor__pane { display: block; }
+    .editor__main { display: block; }
     .editor__scroll { display: block; overflow: visible; }
     .editor__body, .editor__preview {
       display: block !important;
@@ -1328,11 +1912,14 @@
     }
     .editor__body { display: none !important; }
     .editor__preview { display: block !important; }
-    .editor__title {
-      font-size: 24px;
-      padding: 0 0 12px;
+    .print-title {
+      display: block !important;
+      margin: 0 0 16px;
+      padding-bottom: 12px;
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -.02em;
       border-bottom: 1px solid #ccc;
-      margin-bottom: 16px;
     }
   }
 
@@ -1352,15 +1939,32 @@
 <div class="app" id="app">
 
   <!-- ===================== Sidebar ===================== -->
-  <aside class="sidebar">
+  <aside class="sidebar" id="sidebar">
 
     <header class="sidebar__head">
 
       <div class="sidebar__row">
-        <h1 class="sidebar__title">
-          <span id="sidebarTitle">Notes</span>
+        <div class="brand">
+          <svg class="brand__mark" viewBox="0 0 32 32" aria-hidden="true">
+            <defs>
+              <linearGradient id="brand-grad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#60a5fa"/>
+                <stop offset="1" stop-color="#2563eb"/>
+              </linearGradient>
+            </defs>
+            <rect width="32" height="32" rx="8" fill="url(#brand-grad)"/>
+            <path d="M10 7h9l4 4v13a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z"
+                  fill="#fff" opacity=".97"/>
+            <path d="M19 7v4h4" fill="none" stroke="#2563eb" stroke-width="1.6"/>
+            <path d="M12 16h7M12 20h5" stroke="#2563eb" stroke-width="1.8"
+                  stroke-linecap="round"/>
+          </svg>
+          <div class="brand__text">
+            <span class="brand__name" id="sidebarTitle">Notes</span>
+            <span class="brand__tag" id="brandTag">Local-first</span>
+          </div>
           <span class="badge" id="noteCount">0</span>
-        </h1>
+        </div>
 
         <div class="sidebar__actions">
           <button type="button" class="icon-btn" id="trashBtn"
@@ -1397,6 +2001,18 @@
             </button>
             <ul class="menu" role="menu" aria-label="App menu">
               <li role="none">
+                <button type="button" role="menuitem" id="commandPaletteBtn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                       stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <rect x="3" y="3" width="18" height="18" rx="3"/>
+                    <path d="M9 8l-3 4 3 4"/>
+                    <path d="M15 8l3 4-3 4"/>
+                  </svg>
+                  Command palette
+                  <span class="menu__shortcut" id="cmdShortcut">⌘⇧P</span>
+                </button>
+              </li>
+              <li role="none">
                 <button type="button" role="menuitem" id="quickSwitcherBtn">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -1404,7 +2020,30 @@
                     <path d="M21 21l-4.35-4.35"/>
                   </svg>
                   Quick switcher
-                  <span class="menu__shortcut">⌘P</span>
+                  <span class="menu__shortcut" id="qsShortcut">⌘P</span>
+                </button>
+              </li>
+              <li role="none">
+                <button type="button" role="menuitem" id="selectBtn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                       stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M9 11l3 3L22 4"/>
+                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+                  </svg>
+                  Select notes
+                </button>
+              </li>
+              <li role="none"><div class="menu__sep"></div></li>
+              <li role="none">
+                <button type="button" role="menuitem" id="statsBtn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                       stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M3 21h18"/>
+                    <rect x="5" y="13" width="3" height="6" rx="1"/>
+                    <rect x="10.5" y="9" width="3" height="10" rx="1"/>
+                    <rect x="16" y="5" width="3" height="14" rx="1"/>
+                  </svg>
+                  Statistics
                 </button>
               </li>
               <li role="none"><div class="menu__sep"></div></li>
@@ -1416,7 +2055,17 @@
                     <path d="M7 10l5 5 5-5"/>
                     <path d="M12 15V3"/>
                   </svg>
-                  Export all notes
+                  Export all (JSON)
+                </button>
+              </li>
+              <li role="none">
+                <button type="button" role="menuitem" id="exportAllHtmlBtn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                       stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <path d="M14 2v6h6"/>
+                  </svg>
+                  Export all (HTML)
                 </button>
               </li>
               <li role="none">
@@ -1447,6 +2096,7 @@
         </div>
       </div>
 
+      <!-- Split button: New note -->
       <div class="split-button split-button--block" id="newNoteSplit">
         <button type="button" class="split-button__main" id="newNoteBtn">New note</button>
         <button type="button" class="split-button__toggle" id="newNoteToggle"
@@ -1466,7 +2116,7 @@
                 <path d="M14 2v6h6"/>
               </svg>
               Blank note
-              <span class="menu__shortcut">⌘N</span>
+              <span class="menu__shortcut" id="newNoteShortcut">⌘N</span>
             </button>
           </li>
           <li role="none">
@@ -1505,6 +2155,7 @@
         </ul>
       </div>
 
+      <!-- Search -->
       <div class="search">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -1521,6 +2172,10 @@
         </button>
       </div>
 
+      <!-- Tag filter -->
+      <div class="tag-bar hidden" id="tagBar" role="toolbar" aria-label="Filter by tag"></div>
+
+      <!-- Sort + goal -->
       <div class="sidebar__controls">
         <label class="select">
           <span class="sr-only">Sort notes by</span>
@@ -1535,6 +2190,18 @@
             <path d="M6 9l6 6 6-6"/>
           </svg>
         </label>
+
+        <button type="button" class="goal" id="goalChip"
+                title="Daily writing goal — click to change" aria-label="Daily writing goal">
+          <span class="goal__ring" id="goalRing">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle class="ring-bg" cx="12" cy="12" r="9"/>
+              <circle class="ring-fill" id="goalRingFill" cx="12" cy="12" r="9"
+                      stroke-dasharray="56.55" stroke-dashoffset="56.55"/>
+            </svg>
+          </span>
+          <span class="goal__text" id="goalText">0 / 500</span>
+        </button>
       </div>
     </header>
 
@@ -1543,24 +2210,64 @@
       <button type="button" id="emptyTrashBtn">Empty trash</button>
     </div>
 
+    <div class="selection-bar" id="selectionBar">
+      <span class="selection-bar__count" id="selectionCount">0 selected</span>
+      <button type="button" class="icon-btn" id="selPinBtn" title="Pin / unpin" aria-label="Pin">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 17v5"/>
+          <path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/>
+        </svg>
+      </button>
+      <button type="button" class="icon-btn" id="selExportBtn" title="Export as JSON" aria-label="Export">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <path d="M7 10l5 5 5-5"/>
+          <path d="M12 15V3"/>
+        </svg>
+      </button>
+      <button type="button" class="icon-btn icon-btn--danger" id="selTrashBtn" title="Move to trash" aria-label="Move to trash">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M3 6h18"/>
+          <path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/>
+          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+        </svg>
+      </button>
+      <button type="button" class="icon-btn" id="selCancelBtn" title="Cancel selection" aria-label="Cancel">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M18 6L6 18M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
     <ul class="note-list" id="noteList" role="list"></ul>
+
+    <div class="resize-handle" id="resizeHandle" aria-hidden="true"></div>
   </aside>
 
   <!-- ===================== Editor ===================== -->
   <main class="editor">
 
     <div class="editor__empty" id="emptyState">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
-           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-        <path d="M14 2v6h6"/>
-        <path d="M8 13h8"/>
-        <path d="M8 17h5"/>
+      <svg class="editor__empty__logo" viewBox="0 0 32 32" aria-hidden="true">
+        <defs>
+          <linearGradient id="empty-grad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#60a5fa"/>
+            <stop offset="1" stop-color="#2563eb"/>
+          </linearGradient>
+        </defs>
+        <rect width="32" height="32" rx="8" fill="url(#empty-grad)"/>
+        <path d="M10 7h9l4 4v13a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z" fill="#fff" opacity=".97"/>
+        <path d="M19 7v4h4" fill="none" stroke="#2563eb" stroke-width="1.6"/>
+        <path d="M12 16h7M12 20h5" stroke="#2563eb" stroke-width="1.8" stroke-linecap="round"/>
       </svg>
       <h2 id="emptyTitle">No note selected</h2>
       <p id="emptyText">
-        Create a note to get started. Press <kbd>⌘N</kbd> or <kbd>Ctrl</kbd>+<kbd>N</kbd>,
-        or <kbd>⌘P</kbd> to find an existing note.
+        Create a note to get started. Press <kbd id="kbdNew">⌘N</kbd> for a new note,
+        or <kbd id="kbdQuick">⌘P</kbd> to find an existing one.
       </p>
       <button type="button" class="btn btn--primary" id="emptyNewNoteBtn">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
@@ -1573,11 +2280,23 @@
 
     <div class="editor__pane hidden" id="editorPane">
 
+      <h1 class="print-title" id="printTitle"></h1>
+
       <div class="editor__bar">
         <input type="text" class="editor__title" id="titleInput"
                placeholder="Untitled note" aria-label="Note title" autocomplete="off">
 
         <div class="editor__actions">
+          <button type="button" class="icon-btn" id="infoBtn"
+                  aria-pressed="false" aria-label="Toggle note details" title="Note details">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="9"/>
+              <path d="M12 16v-5"/>
+              <path d="M12 8h.01"/>
+            </svg>
+          </button>
+
           <button type="button" class="icon-btn" id="focusBtn"
                   aria-pressed="false" aria-label="Toggle focus mode" title="Focus mode (⌘.)">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -1627,7 +2346,7 @@
                     <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
                   </svg>
                   Duplicate
-                  <span class="menu__shortcut">⌘D</span>
+                  <span class="menu__shortcut" id="dupShortcut">⌘D</span>
                 </button>
               </li>
               <li role="none">
@@ -1662,6 +2381,16 @@
                     <path d="M12 15V3"/>
                   </svg>
                   Download as .md
+                </button>
+              </li>
+              <li role="none">
+                <button type="button" role="menuitem" id="exportHtmlBtn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                       stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <path d="M14 2v6h6"/>
+                  </svg>
+                  Download as .html
                 </button>
               </li>
               <li role="none">
@@ -1706,7 +2435,7 @@
             <path d="M19 4h-9M14 20H5M15 4L9 20"/>
           </svg>
         </button>
-        <button type="button" class="toolbar__btn" data-cmd="strike" title="Strikethrough (⌘⇧X)" aria-label="Strikethrough">
+        <button type="button" class="toolbar__btn" data-cmd="strike" title="Strikethrough" aria-label="Strikethrough">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M16 4H9a3 3 0 0 0-2.83 4"/>
@@ -1714,7 +2443,7 @@
             <path d="M4 12h16"/>
           </svg>
         </button>
-        <button type="button" class="toolbar__btn" data-cmd="code" title="Inline code (⌘⇧C)" aria-label="Inline code">
+        <button type="button" class="toolbar__btn" data-cmd="code" title="Inline code" aria-label="Inline code">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M16 18l6-6-6-6"/>
@@ -1726,6 +2455,14 @@
                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
             <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+          </svg>
+        </button>
+        <button type="button" class="toolbar__btn" data-cmd="wikilink" title="Wiki link [[note]]" aria-label="Wiki link">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M9 8H6a4 4 0 0 0 0 8h3"/>
+            <path d="M15 8h3a4 4 0 0 1 0 8h-3"/>
+            <path d="M9 12h6"/>
           </svg>
         </button>
 
@@ -1808,13 +2545,37 @@
             <path d="M15 9l2 3-2 3"/>
           </svg>
         </button>
+        <button type="button" class="toolbar__btn" data-cmd="table" title="Table" aria-label="Table">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="4" width="18" height="16" rx="2"/>
+            <path d="M3 10h18"/>
+            <path d="M3 15h18"/>
+            <path d="M9 4v16"/>
+          </svg>
+        </button>
       </div>
 
-      <div class="editor__scroll">
-        <textarea class="editor__body" id="bodyInput"
-                  placeholder="Start writing… Markdown supported."
-                  aria-label="Note body" spellcheck="true"></textarea>
-        <article class="editor__preview hidden" id="previewPane" aria-label="Markdown preview"></article>
+      <div class="editor__main">
+        <div class="editor__scroll">
+          <textarea class="editor__body" id="bodyInput"
+                    placeholder="Start writing… Markdown supported. Try #tags, [[wiki links]], and tables."
+                    aria-label="Note body" spellcheck="true"></textarea>
+          <article class="editor__preview hidden" id="previewPane" aria-label="Markdown preview"></article>
+        </div>
+
+        <aside class="info-panel" id="infoPanel" aria-label="Note details">
+          <div class="info-panel__header">
+            <span class="info-panel__title">Details</span>
+            <button type="button" class="icon-btn" id="infoCloseBtn" aria-label="Close details">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M18 6L6 18M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
+          <div class="info-panel__body" id="infoBody"></div>
+        </aside>
       </div>
 
       <div class="editor__foot">
@@ -1833,7 +2594,6 @@
   </main>
 </div>
 
-<!-- Floating focus-mode exit (shown only when focus mode is on and no note is selected) -->
 <button type="button" class="icon-btn focus-exit" id="focusExitBtn"
         aria-label="Exit focus mode" title="Exit focus mode (⌘.)">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -1849,6 +2609,7 @@
 
 <div class="toast-stack" id="toastStack" aria-live="polite" aria-atomic="false"></div>
 
+<!-- Confirm dialog -->
 <div class="modal-backdrop hidden" id="modalBackdrop">
   <div class="modal" role="dialog" aria-modal="true"
        aria-labelledby="modalTitle" aria-describedby="modalDesc">
@@ -1861,6 +2622,38 @@
   </div>
 </div>
 
+<!-- Statistics modal -->
+<div class="modal-backdrop hidden" id="statsBackdrop">
+  <div class="stats-modal" role="dialog" aria-modal="true" aria-labelledby="statsTitle">
+    <div class="stats-modal__head">
+      <svg class="stats-modal__logo" viewBox="0 0 32 32" aria-hidden="true">
+        <defs>
+          <linearGradient id="stats-grad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#60a5fa"/>
+            <stop offset="1" stop-color="#2563eb"/>
+          </linearGradient>
+        </defs>
+        <rect width="32" height="32" rx="8" fill="url(#stats-grad)"/>
+        <path d="M10 7h9l4 4v13a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z" fill="#fff" opacity=".97"/>
+        <path d="M19 7v4h4" fill="none" stroke="#2563eb" stroke-width="1.6"/>
+        <path d="M12 16h7M12 20h5" stroke="#2563eb" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+      <div class="stats-modal__titles">
+        <h2 class="stats-modal__title" id="statsTitle">Your notebook</h2>
+        <p class="stats-modal__sub" id="statsSub">A quick look at what you've written.</p>
+      </div>
+      <button type="button" class="icon-btn" id="statsClose" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M18 6L6 18M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+    <div id="statsBody"></div>
+  </div>
+</div>
+
+<!-- Quick switcher -->
 <div class="quick-backdrop hidden" id="quickBackdrop">
   <div class="quick" role="dialog" aria-modal="true" aria-label="Quick switcher">
     <div class="quick__input">
@@ -1879,30 +2672,51 @@
   </div>
 </div>
 
+<!-- Command palette -->
+<div class="quick-backdrop hidden" id="cmdBackdrop">
+  <div class="quick" role="dialog" aria-modal="true" aria-label="Command palette">
+    <div class="quick__input">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="3" y="3" width="18" height="18" rx="3"/>
+        <path d="M9 8l-3 4 3 4"/>
+        <path d="M15 8l3 4-3 4"/>
+      </svg>
+      <input type="text" id="cmdInput" placeholder="Type a command…"
+             aria-label="Command" autocomplete="off" spellcheck="false">
+    </div>
+    <ul class="quick__list" id="cmdList" role="listbox"></ul>
+    <div class="quick__hint">
+      <kbd>↑</kbd> <kbd>↓</kbd> navigate · <kbd>↵</kbd> run · <kbd>Esc</kbd> close
+    </div>
+  </div>
+</div>
+
 <div class="context-menu" id="contextMenu" role="menu" aria-hidden="true"></div>
 
 <script>
 /* ============================================================
    1. Constants & state
    ============================================================ */
-const STORAGE_KEY = 'notes-app-v4';
-const THEME_KEY   = 'notes-theme';
-const SORT_KEY    = 'notes-sort';
-const VIEW_KEY    = 'notes-view';
-const FOCUS_KEY   = 'notes-focus';
-const SAVE_DELAY  = 450;
-const TRASH_TTL   = 30 * 24 * 60 * 60 * 1000;
+const STORAGE_KEY  = 'notes-app-v5';
+const THEME_KEY    = 'notes-theme';
+const SORT_KEY     = 'notes-sort';
+const VIEW_KEY     = 'notes-view';
+const FOCUS_KEY    = 'notes-focus';
+const SIDEBAR_KEY  = 'notes-sidebar-w';
+const GOAL_KEY     = 'notes-goal';
+const GOAL_STAT_KEY = 'notes-goal-stats';
+const INFO_KEY     = 'notes-info-open';
+const SAVE_DELAY   = 450;
+const TRASH_TTL    = 30 * 24 * 60 * 60 * 1000;
 
 const TEMPLATES = {
-  blank:   { title: '', body: '' },
+  blank: { title: '', body: '' },
   meeting: {
     title: 'Meeting notes',
     body: '**Date:** \n**Attendees:** \n\n## Agenda\n- \n\n## Notes\n- \n\n## Action items\n- [ ] '
   },
-  todo: {
-    title: 'To-do',
-    body: '- [ ] \n- [ ] \n- [ ] '
-  },
+  todo: { title: 'To-do', body: '- [ ] \n- [ ] \n- [ ] ' },
   idea: {
     title: 'Idea',
     body: '## What if…\n\n\n## Why it matters\n\n\n## Next step\n'
@@ -1920,22 +2734,29 @@ const COLORS = [
 ];
 
 const IS_MAC = /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent);
+const MOD = IS_MAC ? '⌘' : 'Ctrl+';
 
 let notes       = [];
 let activeId    = null;
 let query       = '';
+let tagFilter   = '';
 let sortMode    = 'updated';
 let sidebarView = 'notes';
 let previewMode = false;
 let focusMode   = false;
+let infoOpen    = false;
+let selectMode  = false;
+let selectedIds = new Set();
 let saveTimer   = null;
 let listResortTimer = null;
 let lastDeleted = null;
+let dailyGoal   = 500;
+let goalStats   = { date: '', baseline: 0 };
 
 const $ = (id) => document.getElementById(id);
 
 /* ============================================================
-   2. Inline SVG icons
+   2. SVG icons
    ============================================================ */
 const svg = (paths, sw = 2) =>
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="' + sw +
@@ -1958,23 +2779,26 @@ const ICON = {
   edit:      svg('<path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4z"/>'),
   print:     svg('<path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="2"/>'),
   share:     svg('<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.59 13.51l6.83 3.98"/><path d="M15.41 6.51l-6.82 3.98"/>'),
-  doc:       svg('<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/>')
+  doc:       svg('<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/>'),
+  stats:     svg('<path d="M3 21h18"/><rect x="5" y="13" width="3" height="6" rx="1"/><rect x="10.5" y="9" width="3" height="10" rx="1"/><rect x="16" y="5" width="3" height="14" rx="1"/>'),
+  check:     svg('<path d="M5 12l5 5L20 7"/>', 2.6),
+  link:      svg('<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>'),
+  command:   svg('<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 8l-3 4 3 4"/><path d="M15 8l3 4-3 4"/>'),
+  search:    svg('<circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>'),
+  sun:       svg('<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>'),
+  focus:     svg('<path d="M4 14v6h6"/><path d="M20 10V4h-6"/><path d="M4 4l7 7"/><path d="M20 20l-7-7"/>'),
+  html:      svg('<path d="M4 4h16v16H4z"/><path d="M9 9l-2 3 2 3"/><path d="M15 9l2 3-2 3"/>')
 };
 
 /* ============================================================
    3. Utilities
    ============================================================ */
-function uid() {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-}
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
 
 function escapeHtml(str) {
   return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
 function formatTime(ts) {
@@ -1984,6 +2808,12 @@ function formatTime(ts) {
   if (diff < 86_400_000)     return Math.floor(diff / 3_600_000) + 'h ago';
   if (diff < 7 * 86_400_000) return Math.floor(diff / 86_400_000) + 'd ago';
   return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
+function formatFullDate(ts) {
+  return new Date(ts).toLocaleString(undefined, {
+    month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit'
+  });
 }
 
 function titleOf(note) {
@@ -2012,12 +2842,26 @@ function highlightMatch(text, q) {
        + escapeHtml(text.slice(idx + q.length));
 }
 
-function getActiveNote() {
-  return notes.find((n) => n.id === activeId) || null;
+function getActiveNote() { return notes.find((n) => n.id === activeId) || null; }
+function isTrashed(note) { return !!note.deletedAt; }
+
+/* Tag & wiki-link extraction */
+function extractTags(note) {
+  const text = (note.body || '') + ' ' + (note.title || '');
+  const matches = text.match(/(^|\s)#([a-z0-9][a-z0-9-_]{0,30})\b/gi) || [];
+  const tags = matches.map(m => m.trim().slice(1).toLowerCase());
+  return [...new Set(tags)];
 }
 
-function isTrashed(note) {
-  return !!note.deletedAt;
+function extractWikilinks(text) {
+  const matches = (text || '').match(/\[\[([^\]]+)\]\]/g) || [];
+  return [...new Set(matches.map(m => m.slice(2, -2).trim()).filter(Boolean))];
+}
+
+function resolveNoteByTitle(title) {
+  const t = (title || '').trim().toLowerCase();
+  if (!t) return null;
+  return notes.find(n => !isTrashed(n) && titleOf(n).toLowerCase() === t) || null;
 }
 
 /* ============================================================
@@ -2029,10 +2873,9 @@ function loadNotes() {
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
-
     return parsed
-      .filter((n) => n && typeof n === 'object')
-      .map((n) => ({
+      .filter(n => n && typeof n === 'object')
+      .map(n => ({
         id:        typeof n.id === 'string' ? n.id : uid(),
         title:     typeof n.title === 'string' ? n.title : '',
         body:      typeof n.body === 'string' ? n.body : '',
@@ -2042,9 +2885,7 @@ function loadNotes() {
         createdAt: Number(n.createdAt) || Date.now(),
         updatedAt: Number(n.updatedAt) || Date.now()
       }));
-  } catch {
-    return [];
-  }
+  } catch { return []; }
 }
 
 function persist() {
@@ -2063,7 +2904,7 @@ function persist() {
 function purgeOldTrash() {
   const now = Date.now();
   const before = notes.length;
-  notes = notes.filter((n) => !isTrashed(n) || (now - n.deletedAt) < TRASH_TTL);
+  notes = notes.filter(n => !isTrashed(n) || (now - n.deletedAt) < TRASH_TTL);
   return notes.length !== before;
 }
 
@@ -2083,10 +2924,12 @@ function initTheme() {
   applyTheme(theme);
 }
 
-$('themeBtn').addEventListener('click', () => {
+function toggleTheme() {
   const isDark = document.documentElement.hasAttribute('data-theme');
   applyTheme(isDark ? 'light' : 'dark');
-});
+}
+
+$('themeBtn').addEventListener('click', toggleTheme);
 
 /* ============================================================
    6. Ripple — global delegation
@@ -2095,32 +2938,27 @@ const RIPPLE_SELECTOR = [
   '.icon-btn', '.btn', '.split-button__main', '.split-button__toggle',
   '.menu [role="menuitem"]', '.note-item', '.toast__action', '.search__clear',
   '.context-menu__item', '.toolbar__btn', '.quick-switcher__item',
-  '.trash-banner button', '.context-menu__swatch', '.focus-exit'
+  '.trash-banner button', '.context-menu__swatch', '.focus-exit',
+  '.tag-chip', '.info-link', '.goal', '.stats-card'
 ].join(',');
 
 const RIPPLE_DARK_SELECTOR = [
   '.icon-btn', '.btn--ghost', '.note-item', '.toast__action', '.search__clear',
   '.context-menu__item', '.menu [role="menuitem"]', '.toolbar__btn',
   '.quick-switcher__item', '.trash-banner button', '.context-menu__swatch',
-  '.focus-exit'
+  '.focus-exit', '.tag-chip', '.info-link', '.goal', '.stats-card'
 ].join(',');
 
 function spawnRipple(el, x, y, { dark = false } = {}) {
   const rect = el.getBoundingClientRect();
   x = Math.max(0, Math.min(x, rect.width));
   y = Math.max(0, Math.min(y, rect.height));
-
-  const radius = Math.hypot(
-    Math.max(x, rect.width - x),
-    Math.max(y, rect.height - y)
-  );
-
+  const radius = Math.hypot(Math.max(x, rect.width - x), Math.max(y, rect.height - y));
   const ripple = document.createElement('span');
   ripple.className = dark ? 'ripple ripple--dark' : 'ripple';
   ripple.style.width = ripple.style.height = radius * 2 + 'px';
   ripple.style.left  = x - radius + 'px';
   ripple.style.top   = y - radius + 'px';
-
   el.appendChild(ripple);
   ripple.addEventListener('animationend', () => ripple.remove(), { once: true });
   setTimeout(() => ripple.remove(), 800);
@@ -2155,13 +2993,11 @@ function toast(message, { action, duration = 4500 } = {}) {
   const el = document.createElement('div');
   el.className = 'toast';
   el.setAttribute('role', 'status');
-
   const text = document.createElement('span');
   text.textContent = message;
   el.appendChild(text);
 
   let timer;
-
   function dismiss() {
     clearTimeout(timer);
     if (!el.isConnected) return;
@@ -2175,10 +3011,7 @@ function toast(message, { action, duration = 4500 } = {}) {
     btn.type = 'button';
     btn.className = 'toast__action';
     btn.textContent = action.label;
-    btn.addEventListener('click', () => {
-      action.onClick();
-      dismiss();
-    });
+    btn.addEventListener('click', () => { action.onClick(); dismiss(); });
     el.appendChild(btn);
   }
 
@@ -2203,12 +3036,10 @@ function confirmDialog({ title, message, confirmLabel = 'Confirm', danger = true
   return new Promise((resolve) => {
     modalResolve = resolve;
     lastFocused = document.activeElement;
-
-    modalTitle.textContent   = title || 'Are you sure?';
-    modalDesc.textContent    = message || '';
+    modalTitle.textContent = title || 'Are you sure?';
+    modalDesc.textContent = message || '';
     modalConfirm.textContent = confirmLabel;
-    modalConfirm.className   = 'btn ' + (danger ? 'btn--danger' : 'btn--primary');
-
+    modalConfirm.className = 'btn ' + (danger ? 'btn--danger' : 'btn--primary');
     modalBackdrop.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
     requestAnimationFrame(() => modalConfirm.focus());
@@ -2218,29 +3049,22 @@ function confirmDialog({ title, message, confirmLabel = 'Confirm', danger = true
 function closeModal(result) {
   modalBackdrop.classList.add('hidden');
   document.body.style.overflow = '';
-
   const resolve = modalResolve;
   modalResolve = null;
-
   if (lastFocused && lastFocused.isConnected) lastFocused.focus({ preventScroll: true });
   lastFocused = null;
-
   if (resolve) resolve(result);
 }
 
 modalCancel.addEventListener('click', () => closeModal(false));
 modalConfirm.addEventListener('click', () => closeModal(true));
-modalBackdrop.addEventListener('mousedown', (e) => {
-  if (e.target === modalBackdrop) closeModal(false);
-});
-
+modalBackdrop.addEventListener('mousedown', (e) => { if (e.target === modalBackdrop) closeModal(false); });
 modalBackdrop.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); closeModal(false); return; }
   if (e.key !== 'Tab') return;
   const focusables = [...modalBackdrop.querySelectorAll('button:not([disabled])')];
   if (!focusables.length) return;
-  const first = focusables[0];
-  const last  = focusables[focusables.length - 1];
+  const first = focusables[0], last = focusables[focusables.length - 1];
   if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
   else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
 });
@@ -2276,7 +3100,6 @@ function wireMenu(wrap, trigger, { onSelect } = {}) {
   }
 
   trigger.addEventListener('click', () => { isOpen() ? close() : open(); });
-
   trigger.addEventListener('keydown', (e) => {
     if (e.key === 'ArrowDown') { e.preventDefault(); open(); items[0]?.focus(); }
     else if (e.key === 'ArrowUp') { e.preventDefault(); open(); items[items.length - 1]?.focus(); }
@@ -2380,19 +3203,15 @@ function showContextMenu(x, y, items) {
   });
 
   lastContextFocus = document.activeElement;
-
   contextMenu.setAttribute('aria-hidden', 'false');
   contextMenu.style.left = '-9999px';
   contextMenu.style.top  = '-9999px';
   contextMenu.classList.add('is-open');
 
-  // offsetWidth/Height ignore the scale(.96) transform, so measuring is accurate
   const menuW = contextMenu.offsetWidth;
   const menuH = contextMenu.offsetHeight;
-
   const pad = 8;
-  const vw  = window.innerWidth;
-  const vh  = window.innerHeight;
+  const vw = window.innerWidth, vh = window.innerHeight;
 
   let left = x, top = y;
   if (left + menuW + pad > vw) left = Math.max(pad, vw - menuW - pad);
@@ -2406,9 +3225,7 @@ function showContextMenu(x, y, items) {
   const first = contextMenu.querySelector('.context-menu__item');
   if (first) first.focus({ preventScroll: true });
 
-  const onDocPointer = (e) => {
-    if (!contextMenu.contains(e.target)) hideContextMenu();
-  };
+  const onDocPointer = (e) => { if (!contextMenu.contains(e.target)) hideContextMenu(); };
   const onDocKey = (e) => {
     if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); hideContextMenu({ focusBack: true }); return; }
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
@@ -2451,8 +3268,7 @@ function hideContextMenu({ focusBack = false, silent = false } = {}) {
   const wasOpen = contextMenu.classList.contains('is-open');
   contextMenu.classList.remove('is-open');
   contextMenu.setAttribute('aria-hidden', 'true');
-
-  contextMenuCleanup.forEach((fn) => fn());
+  contextMenuCleanup.forEach(fn => fn());
   contextMenuCleanup = [];
 
   if (wasOpen && focusBack && lastContextFocus && lastContextFocus.isConnected) {
@@ -2471,14 +3287,23 @@ function hideContextMenu({ focusBack = false, silent = false } = {}) {
    11. DOM refs
    ============================================================ */
 const app           = $('app');
+const sidebar       = $('sidebar');
 const listEl        = $('noteList');
 const searchInput   = $('searchInput');
 const searchClear   = $('searchClear');
 const sortSelect    = $('sortSelect');
 const noteCountEl   = $('noteCount');
 const sidebarTitle  = $('sidebarTitle');
+const brandTag      = $('brandTag');
 const trashBanner   = $('trashBanner');
 const emptyTrashBtn = $('emptyTrashBtn');
+const selectionBar  = $('selectionBar');
+const selectionCount = $('selectionCount');
+const tagBar        = $('tagBar');
+const goalChip      = $('goalChip');
+const goalRingFill  = $('goalRingFill');
+const goalRing      = $('goalRing');
+const goalText      = $('goalText');
 const emptyState    = $('emptyState');
 const emptyTitle    = $('emptyTitle');
 const emptyText     = $('emptyText');
@@ -2490,6 +3315,10 @@ const previewPane   = $('previewPane');
 const previewBtn    = $('previewBtn');
 const focusBtn      = $('focusBtn');
 const focusExitBtn  = $('focusExitBtn');
+const infoBtn       = $('infoBtn');
+const infoPanel     = $('infoPanel');
+const infoBody      = $('infoBody');
+const infoCloseBtn  = $('infoCloseBtn');
 const pinBtn        = $('pinBtn');
 const statusDot     = $('statusDot');
 const statusText    = $('statusText');
@@ -2498,12 +3327,76 @@ const charCountEl   = $('charCount');
 const readTimeEl    = $('readTime');
 const importInput   = $('importInput');
 const toolbar       = $('toolbar');
+const printTitle    = $('printTitle');
+const resizeHandle  = $('resizeHandle');
+
+/* Set shortcut labels based on platform */
+if (!IS_MAC) {
+  $('cmdShortcut').textContent = 'Ctrl+Shift+P';
+  $('qsShortcut').textContent = 'Ctrl+P';
+  $('newNoteShortcut').textContent = 'Ctrl+N';
+  $('dupShortcut').textContent = 'Ctrl+D';
+  $('kbdNew').textContent = 'Ctrl+N';
+  $('kbdQuick').textContent = 'Ctrl+P';
+}
 
 /* ============================================================
-   12. Sorting & filtering
+   12. Daily goal
+   ============================================================ */
+function todayStr() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
+function totalWords() {
+  return notes.filter(n => !isTrashed(n)).reduce((s, n) => s + countWords(n.body), 0);
+}
+
+function wordsToday() {
+  const today = todayStr();
+  if (goalStats.date !== today) {
+    goalStats = { date: today, baseline: totalWords() };
+    try { localStorage.setItem(GOAL_STAT_KEY, JSON.stringify(goalStats)); } catch {}
+  }
+  return Math.max(0, totalWords() - goalStats.baseline);
+}
+
+function loadGoal() {
+  try {
+    const g = parseInt(localStorage.getItem(GOAL_KEY), 10);
+    if (g > 0) dailyGoal = g;
+    const s = JSON.parse(localStorage.getItem(GOAL_STAT_KEY) || '{}');
+    if (s.date && typeof s.baseline === 'number') goalStats = s;
+  } catch {}
+}
+
+function updateGoalUI() {
+  const today = wordsToday();
+  const pct = Math.min(1, dailyGoal > 0 ? today / dailyGoal : 0);
+  const circumference = 2 * Math.PI * 9;
+  goalRingFill.setAttribute('stroke-dasharray', circumference);
+  goalRingFill.setAttribute('stroke-dashoffset', circumference * (1 - pct));
+  goalRing.classList.toggle('is-done', pct >= 1);
+  goalText.textContent = today + ' / ' + dailyGoal;
+}
+
+goalChip.addEventListener('click', async () => {
+  const current = String(dailyGoal);
+  const next = prompt('Daily writing goal (words):', current);
+  if (next === null) return;
+  const n = parseInt(next, 10);
+  if (!Number.isFinite(n) || n < 0) { toast('Enter a positive number'); return; }
+  dailyGoal = n;
+  try { localStorage.setItem(GOAL_KEY, String(dailyGoal)); } catch {}
+  updateGoalUI();
+  toast('Goal set to ' + dailyGoal + ' words');
+});
+
+/* ============================================================
+   13. Sorting & filtering
    ============================================================ */
 function colorIndex(note) {
-  const i = COLORS.findIndex((c) => c.hex === note.color);
+  const i = COLORS.findIndex(c => c.hex === note.color);
   return i === -1 ? 0 : i;
 }
 
@@ -2520,22 +3413,27 @@ function sortedNotes() {
 }
 
 function filteredNotes() {
-  const q = query.trim().toLowerCase();
-  const base = sortedNotes().filter((n) =>
+  let base = sortedNotes().filter(n =>
     sidebarView === 'trash' ? isTrashed(n) : !isTrashed(n)
   );
+  if (tagFilter) {
+    base = base.filter(n => extractTags(n).includes(tagFilter));
+  }
+  const q = query.trim().toLowerCase();
   if (!q) return base;
-  return base.filter((n) =>
+  return base.filter(n =>
     (n.title || '').toLowerCase().includes(q) ||
     (n.body  || '').toLowerCase().includes(q)
   );
 }
 
 /* ============================================================
-   13. Markdown renderer
+   14. Markdown renderer (with tables + wiki links)
    ============================================================ */
 function renderMarkdown(src) {
-  if (!src || !src.trim()) return '<p class="md-empty">Nothing to preview yet.</p>';
+  if (!src || !src.trim()) {
+    return '<p class="md-empty">Nothing to preview yet.</p>';
+  }
 
   const codeBlocks = [];
   let text = src.replace(/```([\s\S]*?)```/g, (_, code) => {
@@ -2552,16 +3450,44 @@ function renderMarkdown(src) {
   const closeList  = () => { if (listType) { out.push('</' + listType + '>'); listType = null; } };
   const closeQuote = () => { if (inQuote) { out.push('</blockquote>'); inQuote = false; } };
 
-  for (const line of lines) {
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+
     const codeMatch = line.match(/^\u0000CODE(\d+)\u0000$/);
     if (codeMatch) {
       closeList(); closeQuote();
       out.push('<pre><code>' + escapeHtml(codeBlocks[+codeMatch[1]]) + '</code></pre>');
       continue;
     }
+
     if (/^\s*([-*_])(?:\s*\1){2,}\s*$/.test(line)) {
       closeList(); closeQuote(); out.push('<hr>'); continue;
     }
+
+    // Table detection: current line has |, next line is separator
+    if (line.includes('|')) {
+      const next = lines[i + 1];
+      if (next && /^\s*\|?[\s:|-]+\|?\s*$/.test(next) && next.includes('-')) {
+        const headers = parseRow(line);
+        const rows = [];
+        let j = i + 2;
+        while (j < lines.length && lines[j].includes('|') && lines[j].trim()) {
+          rows.push(parseRow(lines[j]));
+          j++;
+        }
+        closeList(); closeQuote();
+        out.push(
+          '<table><thead><tr>' +
+          headers.map(h => '<th>' + inline(h) + '</th>').join('') +
+          '</tr></thead><tbody>' +
+          rows.map(row => '<tr>' + row.map(c => '<td>' + inline(c) + '</td>').join('') + '</tr>').join('') +
+          '</tbody></table>'
+        );
+        i = j - 1;
+        continue;
+      }
+    }
+
     const h = line.match(/^(#{1,6})\s+(.*)$/);
     if (h) {
       closeList(); closeQuote();
@@ -2569,6 +3495,7 @@ function renderMarkdown(src) {
       out.push('<h' + level + '>' + inline(h[2]) + '</h' + level + '>');
       continue;
     }
+
     const q = line.match(/^&gt;\s?(.*)$/);
     if (q) {
       closeList();
@@ -2611,7 +3538,20 @@ function renderMarkdown(src) {
   closeList(); closeQuote();
   return out.join('\n');
 
+  function parseRow(line) {
+    return line.replace(/^\s*\|/, '').replace(/\|\s*$/, '').split('|').map(c => c.trim());
+  }
+
   function inline(s) {
+    // Wiki links first (before escaping — already escaped above)
+    s = s.replace(/\[\[([^\]]+)\]\]/g, (_, raw) => {
+      const title = raw.trim();
+      const safe = escapeHtml(title);
+      const exists = !!resolveNoteByTitle(title);
+      return '<a href="#" class="wikilink' + (exists ? '' : ' is-missing') +
+        '" data-wikilink="' + safe + '">' + safe + '</a>';
+    });
+
     return s
       .replace(/`([^`]+)`/g, '<code>$1</code>')
       .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
@@ -2619,12 +3559,13 @@ function renderMarkdown(src) {
       .replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, '$1<em>$2</em>')
       .replace(/(^|[^_])_([^_\n]+)_(?!_)/g, '$1<em>$2</em>')
       .replace(/~~([^~]+)~~/g, '<del>$1</del>')
-      .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+      .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
+        '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
   }
 }
 
 /* ============================================================
-   14. List rendering
+   15. List rendering
    ============================================================ */
 const PIN_SVG = '<svg class="note-item__pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
   'stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
@@ -2632,15 +3573,60 @@ const PIN_SVG = '<svg class="note-item__pin" viewBox="0 0 24 24" fill="none" str
   '<path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/>' +
   '</svg>';
 
+const CHECK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" ' +
+  'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>';
+
 function updateNoteCount() {
   const n = sidebarView === 'trash'
     ? notes.filter(isTrashed).length
-    : notes.filter((x) => !isTrashed(x)).length;
+    : notes.filter(n => !isTrashed(n)).length;
   noteCountEl.textContent = String(n);
   noteCountEl.classList.toggle('badge--danger', sidebarView === 'trash');
 }
 
+function renderTags() {
+  const active = notes.filter(n => !isTrashed(n));
+  const counts = new Map();
+  active.forEach(n => extractTags(n).forEach(t => counts.set(t, (counts.get(t) || 0) + 1)));
+
+  if (!counts.size) {
+    tagBar.classList.add('hidden');
+    tagBar.innerHTML = '';
+    return;
+  }
+
+  tagBar.classList.remove('hidden');
+  tagBar.innerHTML = '';
+
+  const sorted = [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  const allChip = document.createElement('button');
+  allChip.type = 'button';
+  allChip.className = 'tag-chip' + (tagFilter ? '' : ' is-on');
+  allChip.textContent = 'All';
+  allChip.addEventListener('click', () => {
+    tagFilter = '';
+    renderTags();
+    renderList();
+  });
+  tagBar.appendChild(allChip);
+
+  sorted.forEach(([tag, count]) => {
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'tag-chip' + (tagFilter === tag ? ' is-on' : '');
+    chip.innerHTML = '#' + escapeHtml(tag) +
+      '<span class="tag-chip__count">' + count + '</span>';
+    chip.addEventListener('click', () => {
+      tagFilter = tagFilter === tag ? '' : tag;
+      renderTags();
+      renderList();
+    });
+    tagBar.appendChild(chip);
+  });
+}
+
 function renderList() {
+  const scrollTop = listEl.scrollTop;
   const visible = filteredNotes();
   const q = query.trim();
 
@@ -2648,15 +3634,22 @@ function renderList() {
   updateNoteCount();
 
   sidebarTitle.textContent = sidebarView === 'trash' ? 'Trash' : 'Notes';
+  brandTag.textContent = sidebarView === 'trash' ? 'Recycle bin' : 'Local-first';
   trashBanner.classList.toggle('hidden', sidebarView !== 'trash');
+  renderTags();
 
   if (!visible.length) {
     const li = document.createElement('li');
     li.className = 'list-empty';
-    li.textContent = sidebarView === 'trash'
-      ? (q ? 'No deleted notes match.' : 'Trash is empty.')
-      : (q ? 'No notes match your search.' : 'No notes yet. Use “New note” to add one.');
+    if (sidebarView === 'trash') {
+      li.textContent = q || tagFilter ? 'No deleted notes match.' : 'Trash is empty.';
+    } else if (q || tagFilter) {
+      li.textContent = 'No notes match your filters.';
+    } else {
+      li.textContent = 'No notes yet. Use “New note” to add one.';
+    }
     listEl.appendChild(li);
+    listEl.scrollTop = 0;
     return;
   }
 
@@ -2671,13 +3664,15 @@ function renderList() {
     btn.className = 'note-item'
       + (note.id === activeId ? ' is-active' : '')
       + (note.pinned ? ' is-pinned' : '')
-      + (note.color ? ' has-color' : '');
+      + (note.color ? ' has-color' : '')
+      + (selectedIds.has(note.id) ? ' is-selected' : '');
     btn.dataset.id = note.id;
     btn.setAttribute('aria-current', note.id === activeId ? 'true' : 'false');
     if (note.color) btn.style.setProperty('--note-color', note.color);
 
     btn.innerHTML =
       '<div class="note-item__top">' +
+        '<span class="note-item__check" aria-hidden="true">' + CHECK_SVG + '</span>' +
         '<span class="note-item__title">' + highlightMatch(titleOf(note), q) + '</span>' +
         PIN_SVG +
       '</div>' +
@@ -2688,6 +3683,10 @@ function renderList() {
       '</div>';
 
     btn.addEventListener('click', () => {
+      if (selectMode) {
+        toggleSelect(note.id);
+        return;
+      }
       if (activeId === note.id) return;
       selectNote(note.id);
     });
@@ -2697,6 +3696,7 @@ function renderList() {
   });
 
   listEl.appendChild(frag);
+  listEl.scrollTop = scrollTop;
 }
 
 function updateListRow(note) {
@@ -2712,7 +3712,88 @@ function updateListRow(note) {
 }
 
 /* ============================================================
-   15. Editor rendering
+   16. Selection mode
+   ============================================================ */
+function setSelectMode(on) {
+  selectMode = !!on;
+  app.classList.toggle('is-selecting', selectMode);
+  if (!selectMode) selectedIds.clear();
+  updateSelectionUI();
+  renderList();
+}
+
+function toggleSelect(id) {
+  if (selectedIds.has(id)) selectedIds.delete(id);
+  else selectedIds.add(id);
+  updateSelectionUI();
+  const btn = listEl.querySelector('.note-item[data-id="' + id + '"]');
+  if (btn) btn.classList.toggle('is-selected', selectedIds.has(id));
+}
+
+function updateSelectionUI() {
+  const n = selectedIds.size;
+  selectionCount.textContent = n + ' selected';
+  $('selPinBtn').disabled = n === 0;
+  $('selExportBtn').disabled = n === 0;
+  $('selTrashBtn').disabled = n === 0;
+}
+
+$('selectBtn').addEventListener('click', () => setSelectMode(true));
+$('selCancelBtn').addEventListener('click', () => setSelectMode(false));
+
+$('selPinBtn').addEventListener('click', () => {
+  const ids = [...selectedIds];
+  if (!ids.length) return;
+  // Toggle based on majority
+  const anyUnpinned = ids.some(id => !notes.find(n => n.id === id)?.pinned);
+  ids.forEach(id => {
+    const n = notes.find(nn => nn.id === id);
+    if (n) { n.pinned = anyUnpinned; n.updatedAt = Date.now(); }
+  });
+  persist();
+  renderList();
+  if (ids.includes(activeId)) renderEditor();
+  toast((anyUnpinned ? 'Pinned ' : 'Unpinned ') + ids.length + ' note' + (ids.length === 1 ? '' : 's'));
+});
+
+$('selExportBtn').addEventListener('click', () => {
+  const ids = [...selectedIds];
+  const list = notes.filter(n => ids.includes(n.id));
+  if (!list.length) return;
+  const payload = { version: 5, exportedAt: new Date().toISOString(), notes: list };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'notes-selection-' + new Date().toISOString().slice(0, 10) + '.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+  toast('Exported ' + list.length + ' note' + (list.length === 1 ? '' : 's'));
+});
+
+$('selTrashBtn').addEventListener('click', async () => {
+  const ids = [...selectedIds];
+  if (!ids.length) return;
+  const ok = await confirmDialog({
+    title: 'Move ' + ids.length + ' note' + (ids.length === 1 ? '' : 's') + ' to trash?',
+    message: 'You can restore them from the trash for 30 days.',
+    confirmLabel: 'Move to trash'
+  });
+  if (!ok) return;
+  const now = Date.now();
+  notes.forEach(n => {
+    if (ids.includes(n.id)) { n.deletedAt = now; n.pinned = false; n.updatedAt = now; }
+  });
+  if (ids.includes(activeId)) activeId = null;
+  persist();
+  setSelectMode(false);
+  renderList();
+  renderEditor();
+  toast('Moved to trash');
+});
+
+/* ============================================================
+   17. Editor rendering
    ============================================================ */
 function renderEditor() {
   const note = getActiveNote();
@@ -2730,17 +3811,16 @@ function renderEditor() {
         emptyTitle.textContent = 'Deleted notes';
         emptyText.innerHTML = 'Restore a note from the trash to edit it, or empty the trash to delete it permanently.';
       }
-    } else if (notes.some((n) => !isTrashed(n))) {
+    } else if (notes.some(n => !isTrashed(n))) {
       emptyTitle.textContent = 'No note selected';
-      emptyText.innerHTML = 'Pick a note from the list, or create a new one with <kbd>⌘N</kbd>.';
+      emptyText.innerHTML = 'Pick a note from the list, or create a new one with <kbd>' +
+        (IS_MAC ? '⌘N' : 'Ctrl+N') + '</kbd>.';
     } else {
-      emptyTitle.textContent = 'No notes yet';
+      emptyTitle.textContent = 'Welcome to Notes';
       emptyText.innerHTML = 'Create your first note to get started. Everything is saved in your browser.';
     }
 
-    // Hide "New note" button inside trash view (creating while viewing trash is confusing)
     emptyNewNoteBtn.classList.toggle('hidden', sidebarView === 'trash');
-
     updateFocusExit();
     return;
   }
@@ -2756,8 +3836,11 @@ function renderEditor() {
   pinBtn.setAttribute('aria-label', note.pinned ? 'Unpin note' : 'Pin note');
   pinBtn.title = note.pinned ? 'Unpin note' : 'Pin note';
 
+  printTitle.textContent = titleOf(note);
+
   updateStats();
   refreshPreview();
+  renderInfo();
   setStatus('saved');
   updateFocusExit();
 }
@@ -2787,7 +3870,120 @@ function setStatus(kind, message) {
 }
 
 /* ============================================================
-   16. Preview mode + focus mode
+   18. Info panel (stats, tags, links, backlinks)
+   ============================================================ */
+function getBacklinks(note) {
+  const target = titleOf(note).toLowerCase();
+  return notes.filter(n =>
+    n.id !== note.id &&
+    !isTrashed(n) &&
+    extractWikilinks(n.body).some(t => t.toLowerCase() === target)
+  );
+}
+
+function renderInfo() {
+  const note = getActiveNote();
+  if (!note || isTrashed(note)) { infoBody.innerHTML = ''; return; }
+
+  const words = countWords(note.body);
+  const chars = (note.body || '').length;
+  const tags = extractTags(note);
+  const outgoing = extractWikilinks(note.body);
+  const backlinks = getBacklinks(note);
+
+  const LINK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
+    'stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>' +
+    '<path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>';
+
+  const DOC_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
+    'stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>' +
+    '<path d="M14 2v6h6"/></svg>';
+
+  let html = '';
+
+  html += '<div class="info-section">' +
+    '<h3 class="info-section__title">Stats</h3>' +
+    '<div class="info-stats">' +
+      '<div class="info-stat"><div class="info-stat__value">' + words + '</div><div class="info-stat__label">Words</div></div>' +
+      '<div class="info-stat"><div class="info-stat__value">' + chars + '</div><div class="info-stat__label">Characters</div></div>' +
+      '<div class="info-stat"><div class="info-stat__value">' + Math.max(1, Math.round(words / 200)) + '</div><div class="info-stat__label">Min read</div></div>' +
+      '<div class="info-stat"><div class="info-stat__value">' + escapeHtml(formatTime(note.createdAt)) + '</div><div class="info-stat__label">Created</div></div>' +
+    '</div>' +
+  '</div>';
+
+  if (tags.length) {
+    html += '<div class="info-section">' +
+      '<h3 class="info-section__title">Tags</h3>' +
+      '<div class="info-tags">' +
+        tags.map(t => '<span class="tag-chip">#' + escapeHtml(t) + '</span>').join('') +
+      '</div>' +
+    '</div>';
+  }
+
+  if (outgoing.length) {
+    html += '<div class="info-section">' +
+      '<h3 class="info-section__title">Links to (' + outgoing.length + ')</h3>';
+    outgoing.forEach(title => {
+      const target = resolveNoteByTitle(title);
+      html += '<button type="button" class="info-link" data-target-id="' +
+        (target ? escapeHtml(target.id) : '') + '" data-target-title="' + escapeHtml(title) + '">' +
+        LINK_SVG + '<span class="info-link__label">' + escapeHtml(title) +
+        (target ? '' : ' (missing)') + '</span></button>';
+    });
+    html += '</div>';
+  }
+
+  if (backlinks.length) {
+    html += '<div class="info-section">' +
+      '<h3 class="info-section__title">Linked from (' + backlinks.length + ')</h3>';
+    backlinks.forEach(b => {
+      html += '<button type="button" class="info-link" data-target-id="' + escapeHtml(b.id) + '">' +
+        DOC_SVG + '<span class="info-link__label">' + escapeHtml(titleOf(b)) + '</span></button>';
+    });
+    html += '</div>';
+  }
+
+  if (!tags.length && !outgoing.length && !backlinks.length) {
+    html += '<div class="info-section">' +
+      '<h3 class="info-section__title">Links</h3>' +
+      '<p class="info-empty">Type <code>[[Another note]]</code> to link notes together. ' +
+      'Type <code>#tag</code> to organize with tags.</p>' +
+    '</div>';
+  }
+
+  infoBody.innerHTML = html;
+}
+
+infoBody.addEventListener('click', (e) => {
+  const link = e.target.closest('.info-link');
+  if (!link) return;
+  const id = link.dataset.targetId;
+  const title = link.dataset.targetTitle;
+  if (id) {
+    selectNote(id);
+    return;
+  }
+  if (title) {
+    const t = title.trim();
+    if (confirm('Note "' + t + '" does not exist. Create it?')) {
+      createNote('blank', { title: t });
+    }
+  }
+});
+
+function applyInfoPanel() {
+  infoPanel.classList.toggle('is-open', infoOpen);
+  infoBtn.classList.toggle('is-on', infoOpen);
+  infoBtn.setAttribute('aria-pressed', String(infoOpen));
+  try { localStorage.setItem(INFO_KEY, infoOpen ? '1' : '0'); } catch {}
+  if (infoOpen) renderInfo();
+}
+
+infoBtn.addEventListener('click', () => { infoOpen = !infoOpen; applyInfoPanel(); });
+infoCloseBtn.addEventListener('click', () => { infoOpen = false; applyInfoPanel(); });
+
+/* ============================================================
+   19. Preview mode + focus mode
    ============================================================ */
 function refreshPreview() {
   if (!previewMode) return;
@@ -2798,11 +3994,9 @@ function applyPreviewMode() {
   previewBtn.classList.toggle('is-on', previewMode);
   previewBtn.setAttribute('aria-pressed', String(previewMode));
   previewBtn.title = previewMode ? 'Edit note (⌘E)' : 'Preview markdown (⌘E)';
-
   bodyInput.classList.toggle('hidden', previewMode);
   previewPane.classList.toggle('hidden', !previewMode);
   toolbar.classList.toggle('hidden', previewMode);
-
   refreshPreview();
 }
 
@@ -2815,6 +4009,19 @@ function togglePreview() {
 
 previewBtn.addEventListener('click', togglePreview);
 
+previewPane.addEventListener('click', (e) => {
+  const link = e.target.closest('.wikilink');
+  if (!link) return;
+  e.preventDefault();
+  const title = link.dataset.wikilink;
+  const target = resolveNoteByTitle(title);
+  if (target) {
+    selectNote(target.id);
+  } else if (confirm('Note "' + title + '" does not exist. Create it?')) {
+    createNote('blank', { title });
+  }
+});
+
 function applyFocusMode() {
   app.classList.toggle('is-focus', focusMode);
   focusBtn.classList.toggle('is-on', focusMode);
@@ -2825,24 +4032,16 @@ function applyFocusMode() {
 }
 
 function updateFocusExit() {
-  // Show the floating exit button when focus mode is on and no editable note is visible.
   const note = getActiveNote();
   const showFloating = focusMode && (!note || isTrashed(note));
   focusExitBtn.classList.toggle('is-shown', showFloating);
 }
 
-focusBtn.addEventListener('click', () => {
-  focusMode = !focusMode;
-  applyFocusMode();
-});
-
-focusExitBtn.addEventListener('click', () => {
-  focusMode = false;
-  applyFocusMode();
-});
+focusBtn.addEventListener('click', () => { focusMode = !focusMode; applyFocusMode(); });
+focusExitBtn.addEventListener('click', () => { focusMode = false; applyFocusMode(); });
 
 /* ============================================================
-   17. Note actions
+   20. Note actions
    ============================================================ */
 function selectNote(id) {
   if (activeId === id) return;
@@ -2853,7 +4052,7 @@ function selectNote(id) {
   renderEditor();
 }
 
-function createNote(templateKey = 'blank') {
+function createNote(templateKey = 'blank', { title } = {}) {
   if (sidebarView === 'trash') {
     sidebarView = 'notes';
     try { localStorage.setItem(VIEW_KEY, sidebarView); } catch {}
@@ -2864,7 +4063,7 @@ function createNote(templateKey = 'blank') {
 
   const note = {
     id: uid(),
-    title: tpl.title,
+    title: title !== undefined ? title : tpl.title,
     body: tpl.body,
     pinned: false,
     color: '',
@@ -2881,7 +4080,7 @@ function createNote(templateKey = 'blank') {
   renderEditor();
 
   requestAnimationFrame(() => {
-    if (tpl.title) {
+    if (note.title) {
       bodyInput.focus();
       const len = bodyInput.value.length;
       bodyInput.setSelectionRange(len, len);
@@ -2894,7 +4093,7 @@ function createNote(templateKey = 'blank') {
 emptyNewNoteBtn.addEventListener('click', () => createNote('blank'));
 
 function togglePinNote(id) {
-  const note = notes.find((n) => n.id === id);
+  const note = notes.find(n => n.id === id);
   if (!note || isTrashed(note)) return;
   note.pinned = !note.pinned;
   note.updatedAt = Date.now();
@@ -2905,21 +4104,20 @@ function togglePinNote(id) {
 }
 
 function setNoteColor(id, hex) {
-  const note = notes.find((n) => n.id === id);
+  const note = notes.find(n => n.id === id);
   if (!note) return;
   note.color = hex || '';
   note.updatedAt = Date.now();
   persist();
   renderList();
   if (activeId === id) renderEditor();
-  const name = COLORS.find((c) => c.hex === hex)?.name || 'Default';
+  const name = COLORS.find(c => c.hex === hex)?.name || 'Default';
   toast('Color set to ' + name);
 }
 
 function duplicateNote(id) {
-  const note = notes.find((n) => n.id === id);
+  const note = notes.find(n => n.id === id);
   if (!note) return;
-
   const now = Date.now();
   const copy = {
     id: uid(),
@@ -2931,11 +4129,9 @@ function duplicateNote(id) {
     createdAt: now,
     updatedAt: now
   };
-
-  const index = notes.findIndex((n) => n.id === id);
+  const index = notes.findIndex(n => n.id === id);
   notes.splice(index + 1, 0, copy);
   activeId = copy.id;
-
   persist();
   renderList();
   renderEditor();
@@ -2943,9 +4139,8 @@ function duplicateNote(id) {
 }
 
 async function copyNote(id) {
-  const note = notes.find((n) => n.id === id);
+  const note = notes.find(n => n.id === id);
   if (!note) return;
-
   const text = titleOf(note) + '\n\n' + (note.body || '');
   try {
     if (navigator.clipboard && window.isSecureContext) {
@@ -2954,68 +4149,92 @@ async function copyNote(id) {
       const ta = document.createElement('textarea');
       ta.value = text;
       ta.style.position = 'fixed';
-      ta.style.opacity  = '0';
+      ta.style.opacity = '0';
       document.body.appendChild(ta);
       ta.select();
       document.execCommand('copy');
       ta.remove();
     }
     toast('Copied to clipboard');
-  } catch {
-    toast('Could not copy');
-  }
+  } catch { toast('Could not copy'); }
 }
 
 async function shareNote(id) {
-  const note = notes.find((n) => n.id === id);
+  const note = notes.find(n => n.id === id);
   if (!note) return;
-
   const text = titleOf(note) + '\n\n' + (note.body || '');
-
   if (navigator.share) {
-    try {
-      await navigator.share({ title: titleOf(note), text });
-      return;
-    } catch (e) {
-      if (e.name === 'AbortError') return;
-    }
+    try { await navigator.share({ title: titleOf(note), text }); return; }
+    catch (e) { if (e.name === 'AbortError') return; }
   }
   copyNote(id);
+}
+
+function safeFileName(title) {
+  return (title || 'note')
+    .replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '-').toLowerCase().slice(0, 80) || 'note';
+}
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
 }
 
 function downloadNote(note) {
   if (!note) return;
   const md = '# ' + titleOf(note) + '\n\n' + (note.body || '');
-  const safeName = titleOf(note)
-    .replace(/[^\w\s-]/g, '')
-    .trim()
-    .replace(/\s+/g, '-')
-    .toLowerCase() || 'note';
-
-  const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href = url;
-  a.download = safeName + '.md';
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
+  downloadBlob(new Blob([md], { type: 'text/markdown;charset=utf-8' }), safeFileName(titleOf(note)) + '.md');
   toast('Note downloaded');
+}
+
+function exportHtml(note) {
+  if (!note) return;
+  const title = titleOf(note);
+  const html = '<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="UTF-8">\n' +
+    '<meta name="viewport" content="width=device-width,initial-scale=1">\n' +
+    '<title>' + escapeHtml(title) + '</title>\n' +
+    '<style>' +
+      'body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;max-width:720px;margin:48px auto;padding:0 24px;line-height:1.75;color:#0f172a;}' +
+      'h1{font-size:26px;font-weight:800;margin:0 0 24px;padding-bottom:14px;border-bottom:1px solid #e2e8f0;letter-spacing:-.02em;}' +
+      'h1,h2,h3,h4{line-height:1.3;letter-spacing:-.01em;}' +
+      'h2{margin-top:1.6em;}' +
+      'p{margin:0 0 .9em;}' +
+      'code{background:#f1f5f9;padding:.12em .38em;border-radius:4px;font-size:.88em;font-family:ui-monospace,Menlo,Consolas,monospace;}' +
+      'pre{background:#f1f5f9;padding:14px 16px;border-radius:8px;overflow-x:auto;}' +
+      'pre code{background:none;padding:0;font-size:.86em;}' +
+      'blockquote{margin:0 0 1em;padding:.1em 0 .1em 14px;border-left:3px solid #cbd5e1;color:#64748b;}' +
+      'table{border-collapse:collapse;width:100%;margin:0 0 1em;font-size:.93em;}' +
+      'th,td{border:1px solid #e2e8f0;padding:7px 10px;text-align:left;}' +
+      'th{background:#f1f5f9;font-weight:700;}' +
+      'a{color:#2563eb;}' +
+      '.wikilink{padding:0 6px;background:#eff6ff;border-radius:4px;text-decoration:none;}' +
+      '.wikilink.is-missing{color:#64748b;background:#f1f5f9;text-decoration:line-through;}' +
+      'hr{border:0;border-top:1px solid #e2e8f0;margin:1.5em 0;}' +
+      'ul.task-list{list-style:none;padding-left:.2em;}' +
+      'ul.task-list li{display:flex;gap:8px;align-items:flex-start;}' +
+      'ul.task-list input{margin-top:.38em;}' +
+    '</style>\n</head>\n<body>\n' +
+    '<h1>' + escapeHtml(title) + '</h1>\n' +
+    renderMarkdown(note.body) + '\n</body>\n</html>';
+
+  downloadBlob(new Blob([html], { type: 'text/html;charset=utf-8' }), safeFileName(title) + '.html');
+  toast('Exported as HTML');
 }
 
 function printNote() {
   const note = getActiveNote();
   if (!note || isTrashed(note)) return;
-
-  // The print stylesheet hides the textarea and shows the preview, so make
-  // sure the preview is populated and visible before printing.
   const wasPreview = previewMode;
   if (!wasPreview) {
     previewMode = true;
     applyPreviewMode();
   }
-
   setTimeout(() => {
     window.print();
     if (!wasPreview) {
@@ -3027,19 +4246,20 @@ function printNote() {
 
 /* ---------- Trash ---------- */
 function trashNote(id) {
-  const note = notes.find((n) => n.id === id);
+  const note = notes.find(n => n.id === id);
   if (!note || isTrashed(note)) return;
 
   note.deletedAt = Date.now();
   note.pinned = false;
   note.updatedAt = Date.now();
 
-  const visible = sortedNotes().filter((n) => !isTrashed(n) && n.id !== id);
+  const visible = sortedNotes().filter(n => !isTrashed(n) && n.id !== id);
   activeId = visible.length ? visible[0].id : null;
 
   persist();
   renderList();
   renderEditor();
+  updateGoalUI();
 
   toast('Note moved to trash', {
     action: {
@@ -3053,6 +4273,7 @@ function trashNote(id) {
         persist();
         renderList();
         renderEditor();
+        updateGoalUI();
         toast('Note restored');
       }
     },
@@ -3061,18 +4282,19 @@ function trashNote(id) {
 }
 
 function restoreNote(id) {
-  const note = notes.find((n) => n.id === id);
+  const note = notes.find(n => n.id === id);
   if (!note) return;
   note.deletedAt = 0;
   note.updatedAt = Date.now();
   persist();
   renderList();
   renderEditor();
+  updateGoalUI();
   toast('Note restored');
 }
 
 async function purgeNote(id) {
-  const note = notes.find((n) => n.id === id);
+  const note = notes.find(n => n.id === id);
   if (!note) return;
   const ok = await confirmDialog({
     title: 'Delete permanently?',
@@ -3080,8 +4302,7 @@ async function purgeNote(id) {
     confirmLabel: 'Delete forever'
   });
   if (!ok) return;
-
-  notes = notes.filter((n) => n.id !== id);
+  notes = notes.filter(n => n.id !== id);
   if (activeId === id) {
     const visible = filteredNotes();
     activeId = visible.length ? visible[0].id : null;
@@ -3101,10 +4322,8 @@ async function emptyTrash() {
     confirmLabel: 'Empty trash'
   });
   if (!ok) return;
-
-  notes = notes.filter((n) => !isTrashed(n));
-  if (!notes.find((n) => n.id === activeId)) activeId = null;
-
+  notes = notes.filter(n => !isTrashed(n));
+  if (!notes.find(n => n.id === activeId)) activeId = null;
   persist();
   renderList();
   renderEditor();
@@ -3112,14 +4331,14 @@ async function emptyTrash() {
 }
 
 async function deleteNote(id) {
-  const note = notes.find((n) => n.id === id);
+  const note = notes.find(n => n.id === id);
   if (!note) return;
   if (isTrashed(note)) return purgeNote(id);
   return trashNote(id);
 }
 
 /* ============================================================
-   18. Editing & autosave
+   21. Editing & autosave
    ============================================================ */
 function scheduleSave({ resort = false } = {}) {
   setStatus('saving');
@@ -3128,6 +4347,7 @@ function scheduleSave({ resort = false } = {}) {
   saveTimer = setTimeout(() => {
     const ok = persist();
     setStatus(ok ? 'saved' : 'error', ok ? 'Saved' : 'Could not save');
+    updateGoalUI();
   }, SAVE_DELAY);
 
   if (resort) {
@@ -3148,19 +4368,25 @@ function handleEdit(field, value) {
   note[field] = value;
   note.updatedAt = Date.now();
 
-  if (query.trim()) renderList();
+  if (query.trim() || tagFilter) renderList();
   else updateListRow(note);
 
   if (field === 'body') {
     updateStats();
     if (previewMode) refreshPreview();
+    if (infoOpen) renderInfo();
+    renderTags();
   }
 
   scheduleSave({ resort: true });
 }
 
-titleInput.addEventListener('input', () => handleEdit('title', titleInput.value));
-bodyInput.addEventListener('input',  () => handleEdit('body',  bodyInput.value));
+titleInput.addEventListener('input', () => {
+  handleEdit('title', titleInput.value);
+  printTitle.textContent = titleOf(getActiveNote() || {});
+});
+
+bodyInput.addEventListener('input', () => handleEdit('body', bodyInput.value));
 
 function flushSave() {
   clearTimeout(saveTimer);
@@ -3173,7 +4399,7 @@ document.addEventListener('visibilitychange', () => {
 window.addEventListener('beforeunload', flushSave);
 
 /* ============================================================
-   19. Markdown formatting helpers
+   22. Markdown formatting helpers
    ============================================================ */
 function getCurrentLine(ta) {
   const pos = ta.selectionStart;
@@ -3198,43 +4424,27 @@ function wrapSelection(ta, before, after = before, placeholder = '') {
   const end   = ta.selectionEnd;
   const selected = ta.value.slice(start, end);
   const content = selected || placeholder;
-
   const text = before + content + after;
   ta.value = ta.value.slice(0, start) + text + ta.value.slice(end);
-
-  const selStart = start + before.length;
-  const selEnd   = selStart + content.length;
-  ta.setSelectionRange(selStart, selEnd);
-
+  ta.setSelectionRange(start + before.length, start + before.length + content.length);
   ta.dispatchEvent(new Event('input', { bubbles: true }));
 }
 
-/**
- * Toggle a line prefix.
- * - If the line already starts with `prefix`, remove it.
- * - Otherwise, if it starts with one of `altPrefixes`, replace that with `prefix`.
- * - Otherwise, prepend `prefix`.
- */
 function toggleLinePrefix(ta, prefix, altPrefixes = []) {
   const { lineStart, lineEnd, text } = getCurrentLine(ta);
   let newText;
-
   if (text.startsWith(prefix)) {
     newText = text.slice(prefix.length);
   } else {
-    const alt = altPrefixes.find((p) => text.startsWith(p));
+    const alt = altPrefixes.find(p => text.startsWith(p));
     newText = alt ? prefix + text.slice(alt.length) : prefix + text;
   }
-
   if (newText === text) return;
-
   const delta = newText.length - text.length;
   ta.value = ta.value.slice(0, lineStart) + newText + ta.value.slice(lineEnd);
-
   const clampPos = (p) => Math.max(lineStart, Math.min(lineStart + newText.length, p + delta));
   ta.selectionStart = clampPos(ta.selectionStart);
-  ta.selectionEnd   = clampPos(ta.selectionEnd);
-
+  ta.selectionEnd = clampPos(ta.selectionEnd);
   ta.dispatchEvent(new Event('input', { bubbles: true }));
 }
 
@@ -3249,7 +4459,7 @@ function applyFormat(cmd) {
     case 'strike': wrapSelection(ta, '~~', '~~', 'strikethrough'); break;
     case 'code':   wrapSelection(ta, '`', '`', 'code'); break;
     case 'link':   wrapSelection(ta, '[', '](url)', 'link text'); break;
-
+    case 'wikilink': wrapSelection(ta, '[[', ']]', 'Note title'); break;
     case 'h1':    toggleLinePrefix(ta, '# ',  ['## ', '### ', '#### ']); break;
     case 'h2':    toggleLinePrefix(ta, '## ', ['# ', '### ', '#### ']); break;
     case 'quote': toggleLinePrefix(ta, '> '); break;
@@ -3257,24 +4467,14 @@ function applyFormat(cmd) {
     case 'ol':    toggleLinePrefix(ta, '1. ', ['- ', '* ', '+ ', '- [ ] ']); break;
     case 'task':  toggleLinePrefix(ta, '- [ ] ', ['- ', '* ', '+ ']); break;
 
-    /* Fixed: ensure a blank line before AND after the divider so it renders
-       as a proper markdown HR. Previously the prefix was often '' because
-       the caret sits right after a newline, which produced a run-on line. */
     case 'hr': {
-      const start  = ta.selectionStart;
-      const end    = ta.selectionEnd;
+      const start = ta.selectionStart, end = ta.selectionEnd;
       const before = ta.value.slice(0, start);
-      const after  = ta.value.slice(end);
-
+      const after = ta.value.slice(end);
       let prefix = '';
-      if (before.length > 0 && !before.endsWith('\n\n')) {
-        prefix = before.endsWith('\n') ? '\n' : '\n\n';
-      }
+      if (before.length > 0 && !before.endsWith('\n\n')) prefix = before.endsWith('\n') ? '\n' : '\n\n';
       let suffix = '';
-      if (after.length > 0 && !after.startsWith('\n\n')) {
-        suffix = after.startsWith('\n') ? '\n' : '\n\n';
-      }
-
+      if (after.length > 0 && !after.startsWith('\n\n')) suffix = after.startsWith('\n') ? '\n' : '\n\n';
       const text = prefix + '---' + suffix;
       ta.value = before + text + after;
       ta.selectionStart = ta.selectionEnd = start + text.length;
@@ -3283,19 +4483,35 @@ function applyFormat(cmd) {
     }
 
     case 'codeblock': {
-      const start = ta.selectionStart;
-      const end   = ta.selectionEnd;
+      const start = ta.selectionStart, end = ta.selectionEnd;
       const sel = ta.value.slice(start, end);
       const before = ta.value.slice(0, start);
-      const after  = ta.value.slice(end);
+      const after = ta.value.slice(end);
       const padBefore = (before === '' || before.endsWith('\n')) ? '' : '\n';
-      const padAfter  = (after  === '' || after.startsWith('\n')) ? '' : '\n';
+      const padAfter  = (after === '' || after.startsWith('\n')) ? '' : '\n';
       const body = sel || 'code';
       const block = padBefore + '```\n' + body + '\n```' + padAfter;
       ta.value = before + block + after;
-      const bodyStart = start + padBefore.length + 4; // 4 = len("```\n")
+      const bodyStart = start + padBefore.length + 4;
       ta.selectionStart = bodyStart;
-      ta.selectionEnd   = bodyStart + body.length;
+      ta.selectionEnd = bodyStart + body.length;
+      ta.dispatchEvent(new Event('input', { bubbles: true }));
+      break;
+    }
+
+    case 'table': {
+      const start = ta.selectionStart;
+      const before = ta.value.slice(0, start);
+      const after = ta.value.slice(ta.selectionEnd);
+      const padBefore = (before === '' || before.endsWith('\n')) ? '' : '\n';
+      const padAfter = (after === '' || after.startsWith('\n')) ? '' : '\n';
+      const t = '| Column 1 | Column 2 | Column 3 |\n' +
+                '| -------- | -------- | -------- |\n' +
+                '| Cell     | Cell     | Cell     |';
+      const text = padBefore + t + padAfter;
+      ta.value = before + text + after;
+      ta.selectionStart = start + padBefore.length + 2;
+      ta.selectionEnd = ta.selectionStart + 8;
       ta.dispatchEvent(new Event('input', { bubbles: true }));
       break;
     }
@@ -3309,13 +4525,11 @@ toolbar.addEventListener('click', (e) => {
 });
 
 /* ============================================================
-   20. Auto-list continuation + Tab indent
+   23. Auto-list continuation + Tab indent
    ============================================================ */
 bodyInput.addEventListener('keydown', (e) => {
-  // Enter — continue lists
   if (e.key === 'Enter' && !e.shiftKey && !e.metaKey && !e.ctrlKey) {
     const { lineStart, lineEnd, text } = getCurrentLine(bodyInput);
-
     if (bodyInput.selectionStart !== lineEnd) return;
 
     const taskMatch = text.match(/^(\s*)([-*])\s+\[([ xX])\]\s+(.*)$/);
@@ -3380,27 +4594,26 @@ bodyInput.addEventListener('keydown', (e) => {
     e.preventDefault();
     const { lineStart, lineEnd, text } = getCurrentLine(bodyInput);
     const value = bodyInput.value;
-
     if (e.shiftKey) {
       const toRemove = text.match(/^(\s{1,2})/);
       if (toRemove) {
         const n = toRemove[1].length;
         bodyInput.value = value.slice(0, lineStart) + text.slice(n) + value.slice(lineEnd);
         bodyInput.selectionStart = Math.max(lineStart, bodyInput.selectionStart - n);
-        bodyInput.selectionEnd   = Math.max(lineStart, bodyInput.selectionEnd - n);
+        bodyInput.selectionEnd = Math.max(lineStart, bodyInput.selectionEnd - n);
         bodyInput.dispatchEvent(new Event('input', { bubbles: true }));
       }
     } else {
       bodyInput.value = value.slice(0, lineStart) + '  ' + value.slice(lineStart);
       bodyInput.selectionStart += 2;
-      bodyInput.selectionEnd   += 2;
+      bodyInput.selectionEnd += 2;
       bodyInput.dispatchEvent(new Event('input', { bubbles: true }));
     }
   }
 });
 
 /* ============================================================
-   21. Split button (New note)
+   24. Split button
    ============================================================ */
 const newNoteSplit  = $('newNoteSplit');
 const newNoteBtn    = $('newNoteBtn');
@@ -3412,17 +4625,18 @@ wireMenu(newNoteSplit, newNoteToggle, {
 newNoteBtn.addEventListener('click', () => createNote('blank'));
 
 /* ============================================================
-   22. Editor "more" menu + pin button
+   25. Editor "more" menu
    ============================================================ */
 wireMenu($('moreWrap'), $('moreBtn'), {
   onSelect: (item) => {
     switch (item.id) {
-      case 'dupBtn':       duplicateNote(activeId);       break;
-      case 'copyBtn':      copyNote(activeId);            break;
-      case 'shareBtn':     shareNote(activeId);           break;
+      case 'dupBtn':       duplicateNote(activeId); break;
+      case 'copyBtn':      copyNote(activeId); break;
+      case 'shareBtn':     shareNote(activeId); break;
       case 'exportOneBtn': downloadNote(getActiveNote()); break;
-      case 'printBtn':     printNote();                   break;
-      case 'deleteBtn':    deleteNote(activeId);          break;
+      case 'exportHtmlBtn': exportHtml(getActiveNote()); break;
+      case 'printBtn':     printNote(); break;
+      case 'deleteBtn':    deleteNote(activeId); break;
     }
   }
 });
@@ -3430,65 +4644,82 @@ wireMenu($('moreWrap'), $('moreBtn'), {
 pinBtn.addEventListener('click', () => togglePinNote(activeId));
 
 /* ============================================================
-   23. App menu
+   26. App menu
    ============================================================ */
 wireMenu($('appMenuWrap'), $('appMenuBtn'), {
   onSelect: (item) => {
     switch (item.id) {
-      case 'quickSwitcherBtn': openQuickSwitcher(); break;
-      case 'exportAllBtn':     exportAllNotes();    break;
-      case 'importBtn':        importInput.click(); break;
-      case 'clearAllBtn':      clearAllNotes();     break;
+      case 'commandPaletteBtn': openCmdPalette(); break;
+      case 'quickSwitcherBtn':  openQuickSwitcher(); break;
+      case 'selectBtn':         setSelectMode(true); break;
+      case 'statsBtn':          openStats(); break;
+      case 'exportAllBtn':      exportAllNotes(); break;
+      case 'exportAllHtmlBtn':  exportAllHtml(); break;
+      case 'importBtn':         importInput.click(); break;
+      case 'clearAllBtn':       clearAllNotes(); break;
     }
   }
 });
 
 function exportAllNotes() {
-  const active = notes.filter((n) => !isTrashed(n));
+  const active = notes.filter(n => !isTrashed(n));
   if (!active.length) { toast('No notes to export'); return; }
-
-  const payload = { version: 4, exportedAt: new Date().toISOString(), notes: active };
-  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href = url;
-  a.download = 'notes-' + new Date().toISOString().slice(0, 10) + '.json';
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
+  const payload = { version: 5, exportedAt: new Date().toISOString(), notes: active };
+  downloadBlob(new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' }),
+    'notes-' + new Date().toISOString().slice(0, 10) + '.json');
   toast('Exported ' + active.length + (active.length === 1 ? ' note' : ' notes'));
+}
+
+function exportAllHtml() {
+  const active = notes.filter(n => !isTrashed(n));
+  if (!active.length) { toast('No notes to export'); return; }
+  const html = '<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="UTF-8">\n' +
+    '<title>Notes</title>\n' +
+    '<style>body{font-family:system-ui,-apple-system,sans-serif;max-width:760px;margin:40px auto;padding:0 24px;line-height:1.7;color:#0f172a;}' +
+    'article{padding:20px 0;border-bottom:1px solid #e2e8f0;}article:last-child{border-bottom:0;}' +
+    'h1{font-size:22px;font-weight:800;margin:0 0 12px;letter-spacing:-.02em;}' +
+    'h2,h3,h4{line-height:1.3;}h2{margin-top:1.4em;}' +
+    'code{background:#f1f5f9;padding:.12em .38em;border-radius:4px;font-size:.88em;font-family:ui-monospace,monospace;}' +
+    'pre{background:#f1f5f9;padding:12px 14px;border-radius:8px;overflow-x:auto;}pre code{background:none;padding:0;}' +
+    'blockquote{margin:0 0 .9em;padding:.1em 0 .1em 14px;border-left:3px solid #cbd5e1;color:#64748b;}' +
+    'table{border-collapse:collapse;width:100%;margin:0 0 1em;}th,td{border:1px solid #e2e8f0;padding:7px 10px;text-align:left;}th{background:#f1f5f9;}' +
+    'a{color:#2563eb;}.wikilink{padding:0 6px;background:#eff6ff;border-radius:4px;text-decoration:none;}' +
+    'ul.task-list{list-style:none;padding-left:.2em;}ul.task-list li{display:flex;gap:8px;align-items:flex-start;}ul.task-list input{margin-top:.38em;}' +
+    '</style>\n</head>\n<body>\n' +
+    '<h1>Notes</h1>\n' +
+    active.map(n => '<article><h1>' + escapeHtml(titleOf(n)) + '</h1>' + renderMarkdown(n.body) + '</article>').join('\n') +
+    '\n</body>\n</html>';
+  downloadBlob(new Blob([html], { type: 'text/html;charset=utf-8' }),
+    'notes-' + new Date().toISOString().slice(0, 10) + '.html');
+  toast('Exported ' + active.length + ' notes as HTML');
 }
 
 importInput.addEventListener('change', async () => {
   const file = importInput.files && importInput.files[0];
   importInput.value = '';
   if (!file) return;
-
   try {
     const text = await file.text();
     const parsed = JSON.parse(text);
-    const incoming = Array.isArray(parsed)
-      ? parsed
+    const incoming = Array.isArray(parsed) ? parsed
       : (parsed && Array.isArray(parsed.notes) ? parsed.notes : null);
     if (!incoming) throw new Error('Invalid format');
 
-    const existingIds = new Set(notes.map((n) => n.id));
+    const existingIds = new Set(notes.map(n => n.id));
     let added = 0;
 
-    incoming.forEach((raw) => {
+    incoming.forEach(raw => {
       if (!raw || typeof raw !== 'object') return;
       const now = Date.now();
       let id = typeof raw.id === 'string' && raw.id ? raw.id : uid();
       if (existingIds.has(id)) id = uid();
       existingIds.add(id);
-
       notes.push({
         id,
-        title:     typeof raw.title === 'string' ? raw.title : '',
-        body:      typeof raw.body  === 'string' ? raw.body  : '',
-        pinned:    !!raw.pinned,
-        color:     typeof raw.color === 'string' ? raw.color : '',
+        title: typeof raw.title === 'string' ? raw.title : '',
+        body: typeof raw.body === 'string' ? raw.body : '',
+        pinned: !!raw.pinned,
+        color: typeof raw.color === 'string' ? raw.color : '',
         deletedAt: 0,
         createdAt: Number(raw.createdAt) || now,
         updatedAt: Number(raw.updatedAt) || now
@@ -3498,34 +4729,29 @@ importInput.addEventListener('change', async () => {
 
     if (!added) { toast('No valid notes found'); return; }
     if (!activeId) {
-      const sorted = sortedNotes().filter((n) => !isTrashed(n));
+      const sorted = sortedNotes().filter(n => !isTrashed(n));
       activeId = sorted.length ? sorted[0].id : null;
     }
-
     persist();
     renderList();
     renderEditor();
+    updateGoalUI();
     toast('Imported ' + added + (added === 1 ? ' note' : ' notes'));
-  } catch {
-    toast('Could not read that file');
-  }
+  } catch { toast('Could not read that file'); }
 });
 
 async function clearAllNotes() {
-  const active = notes.filter((n) => !isTrashed(n));
+  const active = notes.filter(n => !isTrashed(n));
   if (!active.length) { toast('No notes to delete'); return; }
-
   const ok = await confirmDialog({
     title: 'Move all notes to trash?',
     message: 'All ' + active.length + ' notes will be moved to trash. You can restore them for 30 days.',
     confirmLabel: 'Move to trash'
   });
   if (!ok) return;
-
   const now = Date.now();
-  active.forEach((n) => { n.deletedAt = now; n.pinned = false; });
+  active.forEach(n => { n.deletedAt = now; n.pinned = false; });
   activeId = null;
-
   persist();
   renderList();
   renderEditor();
@@ -3533,24 +4759,21 @@ async function clearAllNotes() {
 }
 
 /* ============================================================
-   24. Trash toggle
+   27. Trash toggle
    ============================================================ */
 $('trashBtn').addEventListener('click', () => {
   sidebarView = sidebarView === 'trash' ? 'notes' : 'trash';
   try { localStorage.setItem(VIEW_KEY, sidebarView); } catch {}
 
-  const note = getActiveNote();
-  if (note && ((sidebarView === 'trash') !== isTrashed(note))) {
-    activeId = null;
+  const visible = sortedNotes().filter(n =>
+    sidebarView === 'trash' ? isTrashed(n) : !isTrashed(n)
+  );
+  const current = getActiveNote();
+  if (!current || (sidebarView === 'trash') !== isTrashed(current)) {
+    activeId = visible.length ? visible[0].id : null;
     previewMode = false;
     applyPreviewMode();
-  } else if (!note) {
-    const visible = sortedNotes().filter((n) =>
-      sidebarView === 'trash' ? isTrashed(n) : !isTrashed(n)
-    );
-    if (visible.length) activeId = visible[0].id;
   }
-
   renderList();
   renderEditor();
 });
@@ -3558,7 +4781,7 @@ $('trashBtn').addEventListener('click', () => {
 emptyTrashBtn.addEventListener('click', emptyTrash);
 
 /* ============================================================
-   25. Search
+   28. Search
    ============================================================ */
 searchInput.addEventListener('input', () => {
   query = searchInput.value;
@@ -3590,7 +4813,7 @@ searchInput.addEventListener('keydown', (e) => {
 });
 
 /* ============================================================
-   26. Sort
+   29. Sort
    ============================================================ */
 try {
   const stored = localStorage.getItem(SORT_KEY);
@@ -3605,7 +4828,7 @@ sortSelect.addEventListener('change', () => {
 });
 
 /* ============================================================
-   27. List keyboard navigation
+   30. List keyboard navigation
    ============================================================ */
 listEl.addEventListener('keydown', (e) => {
   if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
@@ -3618,14 +4841,14 @@ listEl.addEventListener('keydown', (e) => {
 });
 
 /* ============================================================
-   28. Quick switcher
+   31. Quick switcher
    ============================================================ */
 const quickBackdrop = $('quickBackdrop');
 const quickInput    = $('quickInput');
 const quickList     = $('quickList');
 
 let quickResults = [];
-let quickIndex   = 0;
+let quickIndex = 0;
 let quickLastFocused = null;
 
 function fuzzyScore(query, text) {
@@ -3634,9 +4857,7 @@ function fuzzyScore(query, text) {
   const t = text.toLowerCase();
   if (t.includes(q)) return 2 + (q.length / Math.max(1, t.length));
   let qi = 0;
-  for (let i = 0; i < t.length && qi < q.length; i++) {
-    if (t[i] === q[qi]) qi++;
-  }
+  for (let i = 0; i < t.length && qi < q.length; i++) if (t[i] === q[qi]) qi++;
   return qi === q.length ? 1 : 0;
 }
 
@@ -3657,18 +4878,18 @@ function closeQuickSwitcher() {
 }
 
 function renderQuickResults(q) {
-  const candidates = notes.filter((n) => !isTrashed(n));
+  const candidates = notes.filter(n => !isTrashed(n));
   const scored = candidates
-    .map((n) => {
+    .map(n => {
       const titleScore = fuzzyScore(q, titleOf(n));
-      const bodyScore  = fuzzyScore(q, (n.body || '').slice(0, 200));
+      const bodyScore = fuzzyScore(q, (n.body || '').slice(0, 200));
       return { note: n, score: Math.max(titleScore * 2, bodyScore) };
     })
-    .filter((x) => x.score > 0 || !q)
+    .filter(x => x.score > 0 || !q)
     .sort((a, b) => b.score - a.score || b.note.updatedAt - a.note.updatedAt)
     .slice(0, 30);
 
-  quickResults = scored.map((x) => x.note);
+  quickResults = scored.map(x => x.note);
   quickIndex = 0;
   quickList.innerHTML = '';
 
@@ -3691,6 +4912,7 @@ function renderQuickResults(q) {
     btn.dataset.id = note.id;
 
     btn.innerHTML =
+      '<span class="quick-switcher__icon">' + ICON.doc + '</span>' +
       '<span class="quick-switcher__text">' +
         '<span class="quick-switcher__title">' + escapeHtml(titleOf(note)) + '</span>' +
         '<span class="quick-switcher__meta">' + escapeHtml(previewOf(note)) + ' · ' + escapeHtml(formatTime(note.updatedAt)) + '</span>' +
@@ -3713,9 +4935,9 @@ function openFromQuickSwitcher(id) {
     try { localStorage.setItem(VIEW_KEY, sidebarView); } catch {}
   }
   query = '';
+  tagFilter = '';
   searchInput.value = '';
   searchClear.classList.add('hidden');
-
   activeId = id;
   previewMode = false;
   applyPreviewMode();
@@ -3734,24 +4956,16 @@ function moveQuickIndex(delta) {
   items[quickIndex]?.scrollIntoView({ block: 'nearest' });
 }
 
-quickInput.addEventListener('input', () => {
-  renderQuickResults(quickInput.value);
-});
-
+quickInput.addEventListener('input', () => renderQuickResults(quickInput.value));
 quickInput.addEventListener('keydown', (e) => {
   if (e.key === 'ArrowDown') { e.preventDefault(); moveQuickIndex(1); }
   else if (e.key === 'ArrowUp') { e.preventDefault(); moveQuickIndex(-1); }
   else if (e.key === 'Enter') {
     e.preventDefault();
     const note = quickResults[quickIndex];
-    if (note) {
-      closeQuickSwitcher();
-      setTimeout(() => openFromQuickSwitcher(note.id), 0);
-    }
+    if (note) { closeQuickSwitcher(); setTimeout(() => openFromQuickSwitcher(note.id), 0); }
   } else if (e.key === 'Escape') {
-    e.preventDefault();
-    e.stopPropagation();
-    closeQuickSwitcher();
+    e.preventDefault(); e.stopPropagation(); closeQuickSwitcher();
   }
 });
 
@@ -3760,17 +4974,231 @@ quickBackdrop.addEventListener('mousedown', (e) => {
 });
 
 /* ============================================================
-   29. Context menus
+   32. Command palette
+   ============================================================ */
+const cmdBackdrop = $('cmdBackdrop');
+const cmdInput = $('cmdInput');
+const cmdList = $('cmdList');
+
+let cmdResults = [];
+let cmdIndex = 0;
+let cmdLastFocused = null;
+
+const COMMANDS = [
+  { id: 'new',        label: 'New note',                  icon: ICON.newNote,  shortcut: IS_MAC ? '⌘N' : 'Ctrl+N', run: () => createNote('blank') },
+  { id: 'new-meet',   label: 'New meeting notes',         icon: ICON.meeting,  run: () => createNote('meeting') },
+  { id: 'new-todo',   label: 'New to-do list',            icon: ICON.todo,     run: () => createNote('todo') },
+  { id: 'new-idea',   label: 'New idea',                  icon: ICON.idea,     run: () => createNote('idea') },
+  { type: 'sep' },
+  { id: 'quick',      label: 'Quick switcher',            icon: ICON.search,   shortcut: IS_MAC ? '⌘P' : 'Ctrl+P', run: openQuickSwitcher },
+  { id: 'select',     label: 'Select multiple notes',     icon: ICON.check,    run: () => setSelectMode(true) },
+  { id: 'stats',      label: 'Show statistics',           icon: ICON.stats,    run: openStats },
+  { type: 'sep' },
+  { id: 'theme',      label: 'Toggle dark mode',          icon: ICON.sun,      run: toggleTheme },
+  { id: 'focus',      label: 'Toggle focus mode',         icon: ICON.focus,    shortcut: IS_MAC ? '⌘.' : 'Ctrl+.', run: () => { focusMode = !focusMode; applyFocusMode(); } },
+  { id: 'trash',      label: 'Toggle trash view',         icon: ICON.del,      run: () => $('trashBtn').click() },
+  { id: 'preview',    label: 'Toggle markdown preview',   icon: ICON.eye,      shortcut: IS_MAC ? '⌘E' : 'Ctrl+E', run: togglePreview },
+  { id: 'info',       label: 'Toggle note details',       icon: ICON.doc,      run: () => { infoOpen = !infoOpen; applyInfoPanel(); } },
+  { type: 'sep' },
+  { id: 'print',      label: 'Print current note',        icon: ICON.print,    run: printNote },
+  { id: 'export-one', label: 'Export current note as HTML', icon: ICON.html,   run: () => exportHtml(getActiveNote()) },
+  { id: 'export-md',  label: 'Export current note as Markdown', icon: ICON.download, run: () => downloadNote(getActiveNote()) },
+  { id: 'export-json', label: 'Export all notes (JSON)',  icon: ICON.download, run: exportAllNotes },
+  { id: 'export-html', label: 'Export all notes (HTML)',  icon: ICON.html,     run: exportAllHtml },
+  { id: 'import',     label: 'Import notes…',             icon: ICON.upload,   run: () => importInput.click() },
+  { type: 'sep' },
+  { id: 'theme-swap', label: 'Switch theme',              icon: ICON.sun,      run: toggleTheme },
+];
+
+function openCmdPalette() {
+  cmdLastFocused = document.activeElement;
+  cmdInput.value = '';
+  cmdBackdrop.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+  renderCmdResults('');
+  requestAnimationFrame(() => cmdInput.focus());
+}
+
+function closeCmdPalette() {
+  cmdBackdrop.classList.add('hidden');
+  document.body.style.overflow = '';
+  if (cmdLastFocused && cmdLastFocused.isConnected) cmdLastFocused.focus({ preventScroll: true });
+  cmdLastFocused = null;
+}
+
+function renderCmdResults(q) {
+  const scored = COMMANDS
+    .filter(c => c.type !== 'sep')
+    .map(c => {
+      const score = q ? fuzzyScore(q, c.label) * 2 + (c.id.includes(q.toLowerCase()) ? 1 : 0) : 1;
+      return { cmd: c, score };
+    })
+    .filter(x => x.score > 0 || !q)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 30);
+
+  cmdResults = scored.map(x => x.cmd);
+  cmdIndex = 0;
+  cmdList.innerHTML = '';
+
+  if (!cmdResults.length) {
+    const li = document.createElement('li');
+    li.className = 'list-empty';
+    li.textContent = 'No matching commands.';
+    cmdList.appendChild(li);
+    return;
+  }
+
+  cmdResults.forEach((cmd, i) => {
+    const li = document.createElement('li');
+    li.setAttribute('role', 'option');
+    li.setAttribute('aria-selected', i === cmdIndex ? 'true' : 'false');
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'quick-switcher__item' + (i === cmdIndex ? ' is-focused' : '');
+    btn.innerHTML =
+      '<span class="quick-switcher__icon">' + (cmd.icon || ICON.command) + '</span>' +
+      '<span class="quick-switcher__text">' +
+        '<span class="quick-switcher__title">' + escapeHtml(cmd.label) + '</span>' +
+      '</span>' +
+      (cmd.shortcut ? '<span class="quick-switcher__shortcut">' + escapeHtml(cmd.shortcut) + '</span>' : '');
+
+    btn.addEventListener('click', () => {
+      closeCmdPalette();
+      setTimeout(() => cmd.run(), 0);
+    });
+
+    li.appendChild(btn);
+    cmdList.appendChild(li);
+  });
+}
+
+function moveCmdIndex(delta) {
+  if (!cmdResults.length) return;
+  cmdIndex = (cmdIndex + delta + cmdResults.length) % cmdResults.length;
+  const items = [...cmdList.querySelectorAll('.quick-switcher__item')];
+  items.forEach((el, i) => {
+    el.classList.toggle('is-focused', i === cmdIndex);
+    el.parentElement.setAttribute('aria-selected', i === cmdIndex ? 'true' : 'false');
+  });
+  items[cmdIndex]?.scrollIntoView({ block: 'nearest' });
+}
+
+cmdInput.addEventListener('input', () => renderCmdResults(cmdInput.value));
+cmdInput.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowDown') { e.preventDefault(); moveCmdIndex(1); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); moveCmdIndex(-1); }
+  else if (e.key === 'Enter') {
+    e.preventDefault();
+    const cmd = cmdResults[cmdIndex];
+    if (cmd) { closeCmdPalette(); setTimeout(() => cmd.run(), 0); }
+  } else if (e.key === 'Escape') {
+    e.preventDefault(); e.stopPropagation(); closeCmdPalette();
+  }
+});
+
+cmdBackdrop.addEventListener('mousedown', (e) => {
+  if (e.target === cmdBackdrop) closeCmdPalette();
+});
+
+/* ============================================================
+   33. Statistics modal
+   ============================================================ */
+const statsBackdrop = $('statsBackdrop');
+const statsBody = $('statsBody');
+
+function openStats() {
+  const active = notes.filter(n => !isTrashed(n));
+  const trashed = notes.filter(isTrashed);
+  const totalWords = active.reduce((s, n) => s + countWords(n.body), 0);
+  const totalChars = active.reduce((s, n) => s + (n.body || '').length, 0);
+  const totalReadMin = Math.max(1, Math.round(totalWords / 200));
+
+  const tagCounts = new Map();
+  active.forEach(n => extractTags(n).forEach(t => tagCounts.set(t, (tagCounts.get(t) || 0) + 1)));
+  const topTags = [...tagCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8);
+
+  const longest = [...active].sort((a, b) => countWords(b.body) - countWords(a.body))[0];
+  const recent = [...active].sort((a, b) => b.updatedAt - a.updatedAt)[0];
+  const linkCount = active.reduce((s, n) => s + extractWikilinks(n.body).length, 0);
+
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const createdToday = active.filter(n => n.createdAt >= today.getTime()).length;
+
+  let html = '';
+
+  html += '<div class="stats-grid">' +
+    '<div class="stats-card"><div class="stats-card__value">' + active.length + '</div><div class="stats-card__label">Notes</div></div>' +
+    '<div class="stats-card"><div class="stats-card__value">' + totalWords.toLocaleString() + '</div><div class="stats-card__label">Words</div></div>' +
+    '<div class="stats-card"><div class="stats-card__value">' + totalChars.toLocaleString() + '</div><div class="stats-card__label">Characters</div></div>' +
+    '<div class="stats-card"><div class="stats-card__value">' + totalReadMin + '</div><div class="stats-card__label">Minutes of reading</div></div>' +
+    '<div class="stats-card"><div class="stats-card__value">' + tagCounts.size + '</div><div class="stats-card__label">Unique tags</div></div>' +
+    '<div class="stats-card"><div class="stats-card__value">' + linkCount + '</div><div class="stats-card__label">Wiki links</div></div>' +
+    '<div class="stats-card"><div class="stats-card__value">' + createdToday + '</div><div class="stats-card__label">Created today</div></div>' +
+    '<div class="stats-card"><div class="stats-card__value">' + trashed.length + '</div><div class="stats-card__label">In trash</div></div>' +
+  '</div>';
+
+  if (longest && countWords(longest.body) > 0) {
+    html += '<div class="stats-section">' +
+      '<h3 class="stats-section__title">Longest note</h3>' +
+      '<ul class="stats-list"><li><strong>' + escapeHtml(titleOf(longest)) + '</strong>' +
+      '<span>' + countWords(longest.body).toLocaleString() + ' words</span></li></ul>' +
+    '</div>';
+  }
+
+  if (recent) {
+    html += '<div class="stats-section">' +
+      '<h3 class="stats-section__title">Most recent</h3>' +
+      '<ul class="stats-list"><li><strong>' + escapeHtml(titleOf(recent)) + '</strong>' +
+      '<span>' + escapeHtml(formatFullDate(recent.updatedAt)) + '</span></li></ul>' +
+    '</div>';
+  }
+
+  if (topTags.length) {
+    html += '<div class="stats-section">' +
+      '<h3 class="stats-section__title">Top tags</h3>' +
+      '<ul class="stats-list">' +
+      topTags.map(([tag, count]) =>
+        '<li><strong>#' + escapeHtml(tag) + '</strong><span>' + count + ' note' + (count === 1 ? '' : 's') + '</span></li>'
+      ).join('') +
+      '</ul>' +
+    '</div>';
+  }
+
+  statsBody.innerHTML = html;
+  statsBackdrop.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+  requestAnimationFrame(() => $('statsClose').focus());
+}
+
+function closeStats() {
+  statsBackdrop.classList.add('hidden');
+  document.body.style.overflow = '';
+  if (activeElement_isConnected($('statsBtn'))) $('statsBtn').focus();
+}
+
+function activeElement_isConnected(el) { return el && el.isConnected; }
+
+$('statsClose').addEventListener('click', closeStats);
+statsBackdrop.addEventListener('mousedown', (e) => { if (e.target === statsBackdrop) closeStats(); });
+statsBackdrop.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); closeStats(); }
+});
+
+/* ============================================================
+   34. Context menus
    ============================================================ */
 function showNoteContextMenu(x, y, noteId) {
-  const note = notes.find((n) => n.id === noteId);
+  const note = notes.find(n => n.id === noteId);
   if (!note) return;
 
   if (isTrashed(note)) {
     showContextMenu(x, y, [
-      { label: 'Restore',           icon: ICON.restore,  action: () => restoreNote(noteId) },
-      { label: 'Copy to clipboard', icon: ICON.copy,     action: () => copyNote(noteId) },
-      { label: 'Download as .md',   icon: ICON.download, action: () => downloadNote(note) },
+      { label: 'Restore', icon: ICON.restore, action: () => restoreNote(noteId) },
+      { label: 'Copy to clipboard', icon: ICON.copy, action: () => copyNote(noteId) },
+      { label: 'Download as .md', icon: ICON.download, action: () => downloadNote(note) },
+      { label: 'Download as .html', icon: ICON.html, action: () => exportHtml(note) },
       { type: 'separator' },
       { label: 'Delete permanently', icon: ICON.del, danger: true, action: () => purgeNote(noteId) }
     ]);
@@ -3778,17 +5206,14 @@ function showNoteContextMenu(x, y, noteId) {
   }
 
   showContextMenu(x, y, [
-    { label: 'Open',  icon: ICON.open, action: () => selectNote(noteId) },
-    {
-      label: note.pinned ? 'Unpin' : 'Pin',
-      icon: ICON.pin,
-      action: () => togglePinNote(noteId)
-    },
+    { label: 'Open', icon: ICON.open, action: () => selectNote(noteId) },
+    { label: note.pinned ? 'Unpin' : 'Pin', icon: ICON.pin, action: () => togglePinNote(noteId) },
     { type: 'colors', current: note.color, onPick: (hex) => setNoteColor(noteId, hex) },
     { type: 'separator' },
-    { label: 'Duplicate',         icon: ICON.duplicate, shortcut: IS_MAC ? '⌘D' : 'Ctrl+D', action: () => duplicateNote(noteId) },
-    { label: 'Copy to clipboard', icon: ICON.copy,      action: () => copyNote(noteId) },
-    { label: 'Download as .md',   icon: ICON.download,  action: () => downloadNote(note) },
+    { label: 'Duplicate', icon: ICON.duplicate, shortcut: IS_MAC ? '⌘D' : 'Ctrl+D', action: () => duplicateNote(noteId) },
+    { label: 'Copy to clipboard', icon: ICON.copy, action: () => copyNote(noteId) },
+    { label: 'Download as .md', icon: ICON.download, action: () => downloadNote(note) },
+    { label: 'Download as .html', icon: ICON.html, action: () => exportHtml(note) },
     { type: 'separator' },
     { label: 'Move to trash', icon: ICON.del, danger: true, action: () => trashNote(noteId) }
   ]);
@@ -3802,34 +5227,35 @@ function showListEmptyContextMenu(x, y) {
     return;
   }
   showContextMenu(x, y, [
-    { label: 'New note',      icon: ICON.newNote, shortcut: IS_MAC ? '⌘N' : 'Ctrl+N', action: () => createNote('blank') },
+    { label: 'New note', icon: ICON.newNote, shortcut: IS_MAC ? '⌘N' : 'Ctrl+N', action: () => createNote('blank') },
     { label: 'Meeting notes', icon: ICON.meeting, action: () => createNote('meeting') },
-    { label: 'To-do list',    icon: ICON.todo,    action: () => createNote('todo') },
-    { label: 'Idea',          icon: ICON.idea,    action: () => createNote('idea') },
+    { label: 'To-do list', icon: ICON.todo, action: () => createNote('todo') },
+    { label: 'Idea', icon: ICON.idea, action: () => createNote('idea') },
     { type: 'separator' },
-    { label: 'Quick switcher',   icon: ICON.doc,       shortcut: IS_MAC ? '⌘P' : 'Ctrl+P', action: openQuickSwitcher },
-    { label: 'Export all notes', icon: ICON.download,  action: exportAllNotes },
-    { label: 'Import notes…',    icon: ICON.upload,    action: () => importInput.click() }
+    { label: 'Command palette', icon: ICON.command, shortcut: IS_MAC ? '⌘⇧P' : 'Ctrl+Shift+P', action: openCmdPalette },
+    { label: 'Quick switcher', icon: ICON.search, shortcut: IS_MAC ? '⌘P' : 'Ctrl+P', action: openQuickSwitcher },
+    { label: 'Statistics', icon: ICON.stats, action: openStats },
+    { type: 'separator' },
+    { label: 'Export all (JSON)', icon: ICON.download, action: exportAllNotes },
+    { label: 'Export all (HTML)', icon: ICON.html, action: exportAllHtml },
+    { label: 'Import notes…', icon: ICON.upload, action: () => importInput.click() }
   ]);
 }
 
 function showEditorContextMenu(x, y) {
   const note = getActiveNote();
   if (!note || isTrashed(note)) return;
-
   showContextMenu(x, y, [
-    {
-      label: previewMode ? 'Edit note' : 'Preview markdown',
-      icon: previewMode ? ICON.edit : ICON.eye,
-      shortcut: IS_MAC ? '⌘E' : 'Ctrl+E',
-      action: togglePreview
-    },
+    { label: previewMode ? 'Edit note' : 'Preview markdown', icon: previewMode ? ICON.edit : ICON.eye,
+      shortcut: IS_MAC ? '⌘E' : 'Ctrl+E', action: togglePreview },
+    { label: infoOpen ? 'Hide details' : 'Show details', icon: ICON.doc, action: () => { infoOpen = !infoOpen; applyInfoPanel(); } },
     { type: 'separator' },
-    { label: 'Duplicate',         icon: ICON.duplicate, shortcut: IS_MAC ? '⌘D' : 'Ctrl+D', action: () => duplicateNote(note.id) },
-    { label: 'Copy to clipboard', icon: ICON.copy,      action: () => copyNote(note.id) },
-    { label: 'Share…',            icon: ICON.share,     action: () => shareNote(note.id) },
-    { label: 'Download as .md',   icon: ICON.download,  action: () => downloadNote(note) },
-    { label: 'Print note',        icon: ICON.print,     action: printNote },
+    { label: 'Duplicate', icon: ICON.duplicate, shortcut: IS_MAC ? '⌘D' : 'Ctrl+D', action: () => duplicateNote(note.id) },
+    { label: 'Copy to clipboard', icon: ICON.copy, action: () => copyNote(note.id) },
+    { label: 'Share…', icon: ICON.share, action: () => shareNote(note.id) },
+    { label: 'Download as .md', icon: ICON.download, action: () => downloadNote(note) },
+    { label: 'Download as .html', icon: ICON.html, action: () => exportHtml(note) },
+    { label: 'Print note', icon: ICON.print, action: printNote },
     { type: 'separator' },
     { label: 'Move to trash', icon: ICON.del, danger: true, action: () => trashNote(note.id) }
   ]);
@@ -3851,23 +5277,19 @@ editorPane.addEventListener('contextmenu', (e) => {
 });
 
 document.addEventListener('contextmenu', (e) => {
-  if (e.target.closest('.menu, .modal-backdrop, .toast-stack, input, textarea, .quick-backdrop, .context-menu')) return;
+  if (e.target.closest('.menu, .modal-backdrop, .toast-stack, input, textarea, .quick-backdrop, .context-menu, .stats-modal')) return;
   if (e.target.closest('.sidebar, .editor, .toolbar')) e.preventDefault();
 });
 
 /* ---- Long-press (touch) ---- */
-let lpTimer = null;
-let lpStart = null;
-let lpFiredAt = 0;
+let lpTimer = null, lpStart = null, lpFiredAt = 0;
 
 document.addEventListener('pointerdown', (e) => {
   if (e.pointerType !== 'touch') return;
   const item = e.target.closest('.note-item');
   if (!item) return;
-
   lpStart = { x: e.clientX, y: e.clientY, id: item.dataset.id };
   clearTimeout(lpTimer);
-
   lpTimer = setTimeout(() => {
     lpFiredAt = Date.now();
     if (navigator.vibrate) { try { navigator.vibrate(8); } catch {} }
@@ -3879,35 +5301,20 @@ document.addEventListener('pointermove', (e) => {
   if (!lpTimer || !lpStart) return;
   const dx = e.clientX - lpStart.x;
   const dy = e.clientY - lpStart.y;
-  if (Math.hypot(dx, dy) > 12) {
-    clearTimeout(lpTimer);
-    lpTimer = null;
-    lpStart = null;
-  }
+  if (Math.hypot(dx, dy) > 12) { clearTimeout(lpTimer); lpTimer = null; lpStart = null; }
 }, { passive: true });
 
-document.addEventListener('pointerup', () => {
-  clearTimeout(lpTimer);
-  lpTimer = null;
-  lpStart = null;
-}, { passive: true });
-
-document.addEventListener('pointercancel', () => {
-  clearTimeout(lpTimer);
-  lpTimer = null;
-  lpStart = null;
-}, { passive: true });
+document.addEventListener('pointerup', () => { clearTimeout(lpTimer); lpTimer = null; lpStart = null; }, { passive: true });
+document.addEventListener('pointercancel', () => { clearTimeout(lpTimer); lpTimer = null; lpStart = null; }, { passive: true });
 
 document.addEventListener('click', (e) => {
   if (lpFiredAt && Date.now() - lpFiredAt < 600) {
-    e.preventDefault();
-    e.stopPropagation();
-    lpFiredAt = 0;
+    e.preventDefault(); e.stopPropagation(); lpFiredAt = 0;
   }
 }, true);
 
 /* ============================================================
-   30. Global keyboard shortcuts
+   35. Global keyboard shortcuts
    ============================================================ */
 function isTypingTarget(el) {
   if (!el) return false;
@@ -3918,29 +5325,39 @@ function isTypingTarget(el) {
 document.addEventListener('keydown', (e) => {
   if (!modalBackdrop.classList.contains('hidden')) return;
   if (!quickBackdrop.classList.contains('hidden')) return;
+  if (!cmdBackdrop.classList.contains('hidden')) return;
+  if (!statsBackdrop.classList.contains('hidden')) return;
   if (contextMenu.classList.contains('is-open')) return;
   if (e.defaultPrevented) return;
 
   const mod = e.metaKey || e.ctrlKey;
   const key = e.key.toLowerCase();
 
+  // ⌘⇧P — command palette
+  if (mod && e.shiftKey && key === 'p') {
+    e.preventDefault();
+    openCmdPalette();
+    return;
+  }
+
+  // ⌘P — quick switcher
   if (mod && key === 'p' && !e.shiftKey) {
     e.preventDefault();
     openQuickSwitcher();
     return;
   }
 
+  // ⌘N — new blank note
   if (mod && !e.shiftKey && !e.altKey && key === 'n') {
     e.preventDefault();
     createNote('blank');
     return;
   }
 
+  // ⌘K — link formatting or focus search
   if (mod && key === 'k') {
     if (document.activeElement === bodyInput && !previewMode) {
-      e.preventDefault();
-      applyFormat('link');
-      return;
+      e.preventDefault(); applyFormat('link'); return;
     }
     e.preventDefault();
     searchInput.focus();
@@ -3948,6 +5365,7 @@ document.addEventListener('keydown', (e) => {
     return;
   }
 
+  // ⌘S — force save
   if (mod && key === 's') {
     e.preventDefault();
     flushSave();
@@ -3956,18 +5374,21 @@ document.addEventListener('keydown', (e) => {
     return;
   }
 
+  // ⌘D — duplicate active note
   if (mod && key === 'd') {
     e.preventDefault();
     if (activeId) duplicateNote(activeId);
     return;
   }
 
+  // ⌘E — toggle preview
   if (mod && key === 'e') {
     e.preventDefault();
     togglePreview();
     return;
   }
 
+  // ⌘. — focus mode
   if (mod && key === '.') {
     e.preventDefault();
     focusMode = !focusMode;
@@ -3975,20 +5396,23 @@ document.addEventListener('keydown', (e) => {
     return;
   }
 
-  if (mod && document.activeElement === bodyInput && !previewMode) {
-    if (key === 'b' && !e.shiftKey) { e.preventDefault(); applyFormat('bold');   return; }
-    if (key === 'i' && !e.shiftKey) { e.preventDefault(); applyFormat('italic'); return; }
-    if (e.shiftKey && key === 'x')  { e.preventDefault(); applyFormat('strike'); return; }
-    if (e.shiftKey && key === 'c')  { e.preventDefault(); applyFormat('code');   return; }
+  // ⌘I — toggle info panel
+  if (mod && key === 'i' && !e.shiftKey) {
+    e.preventDefault();
+    infoOpen = !infoOpen;
+    applyInfoPanel();
+    return;
   }
 
+  // Escape — close menus, cancel selection, blur inputs
   if (e.key === 'Escape') {
+    if (selectMode) { e.preventDefault(); setSelectMode(false); return; }
     const hadOpen = document.querySelector('.is-open');
     if (hadOpen) {
-      document.querySelectorAll('.is-open').forEach((el) => {
+      document.querySelectorAll('.is-open').forEach(el => {
         if (!el.classList.contains('context-menu')) el.classList.remove('is-open');
       });
-      document.querySelectorAll('[aria-expanded="true"]').forEach((el) => el.setAttribute('aria-expanded', 'false'));
+      document.querySelectorAll('[aria-expanded="true"]').forEach(el => el.setAttribute('aria-expanded', 'false'));
     }
     if (isTypingTarget(document.activeElement) && document.activeElement !== searchInput) {
       document.activeElement.blur();
@@ -3997,12 +5421,54 @@ document.addEventListener('keydown', (e) => {
 });
 
 /* ============================================================
-   31. Live relative timestamps
+   36. Resizable sidebar
+   ============================================================ */
+let resizing = false;
+let resizeStartX = 0;
+let resizeStartW = 0;
+
+resizeHandle.addEventListener('pointerdown', (e) => {
+  if (e.button !== 0) return;
+  e.preventDefault();
+  resizing = true;
+  resizeStartX = e.clientX;
+  resizeStartW = sidebar.getBoundingClientRect().width;
+  resizeHandle.classList.add('is-active');
+  app.classList.add('is-resizing');
+  document.body.style.cursor = 'col-resize';
+  document.body.style.userSelect = 'none';
+  try { resizeHandle.setPointerCapture(e.pointerId); } catch {}
+});
+
+resizeHandle.addEventListener('pointermove', (e) => {
+  if (!resizing) return;
+  const delta = e.clientX - resizeStartX;
+  const w = Math.max(220, Math.min(520, resizeStartW + delta));
+  app.style.setProperty('--sidebar-w', w + 'px');
+});
+
+function endResize(e) {
+  if (!resizing) return;
+  resizing = false;
+  resizeHandle.classList.remove('is-active');
+  app.classList.remove('is-resizing');
+  document.body.style.cursor = '';
+  document.body.style.userSelect = '';
+  try { resizeHandle.releasePointerCapture(e.pointerId); } catch {}
+  const w = app.style.getPropertyValue('--sidebar-w');
+  if (w) { try { localStorage.setItem(SIDEBAR_KEY, w); } catch {} }
+}
+
+resizeHandle.addEventListener('pointerup', endResize);
+resizeHandle.addEventListener('pointercancel', endResize);
+
+/* ============================================================
+   37. Live relative timestamps
    ============================================================ */
 setInterval(() => {
   if (document.visibilityState !== 'visible') return;
-  listEl.querySelectorAll('.note-item').forEach((btn) => {
-    const note = notes.find((n) => n.id === btn.dataset.id);
+  listEl.querySelectorAll('.note-item').forEach(btn => {
+    const note = notes.find(n => n.id === btn.dataset.id);
     if (!note) return;
     const el = btn.querySelector('.note-item__time');
     if (el) {
@@ -4013,28 +5479,34 @@ setInterval(() => {
 }, 60_000);
 
 /* ============================================================
-   32. Boot
+   38. Boot
    ============================================================ */
 function init() {
   initTheme();
+  loadGoal();
 
   try {
     const v = localStorage.getItem(VIEW_KEY);
     if (v === 'trash' || v === 'notes') sidebarView = v;
     if (localStorage.getItem(FOCUS_KEY) === '1') focusMode = true;
+    if (localStorage.getItem(INFO_KEY) === '1') infoOpen = true;
+    const w = localStorage.getItem(SIDEBAR_KEY);
+    if (w) app.style.setProperty('--sidebar-w', w);
   } catch {}
 
   notes = loadNotes();
 
   if (purgeOldTrash()) persist();
 
-  const visible = sortedNotes().filter((n) =>
+  const visible = sortedNotes().filter(n =>
     sidebarView === 'trash' ? isTrashed(n) : !isTrashed(n)
   );
   activeId = visible.length ? visible[0].id : null;
 
   applyPreviewMode();
   applyFocusMode();
+  applyInfoPanel();
+  updateGoalUI();
   renderList();
   renderEditor();
 }
