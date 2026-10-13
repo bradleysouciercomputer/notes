@@ -73,26 +73,51 @@
     border: 0;
   }
 
-  /* App shell */
+  /* ============================================================
+     App shell
+     Fix: keep the sidebar as a grid item in focus mode (shrunk to
+     0px and faded out) so the editor stays in the second track.
+     Using display:none removed it from the grid entirely, which
+     caused auto-placement to put the editor in the 0px column.
+     ============================================================ */
   .app {
     display: grid;
     grid-template-columns: 320px minmax(0, 1fr);
     height: 100vh;
     height: 100dvh;
-    transition: grid-template-columns .2s ease;
+    overflow: hidden;
+    transition: grid-template-columns .22s ease;
   }
 
-  .app.is-focus { grid-template-columns: 0 minmax(0, 1fr); }
-  .app.is-focus .sidebar { display: none; }
+  .app.is-focus {
+    grid-template-columns: 0px minmax(0, 1fr);
+  }
 
   /* Sidebar */
   .sidebar {
     display: flex;
     flex-direction: column;
     min-height: 0;
+    min-width: 0;             /* essential: allow shrinking to 0px */
+    overflow: hidden;         /* clip content while collapsing */
     background: var(--surface);
     border-right: 1px solid var(--border);
-    transition: background-color .2s ease, border-color .2s ease;
+    transition:
+      background-color .2s ease,
+      border-color .2s ease,
+      opacity .22s ease;
+  }
+
+  .app.is-focus .sidebar {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    /* Delay the visibility change so the fade-out is actually visible */
+    transition:
+      background-color .2s ease,
+      border-color .2s ease,
+      opacity .22s ease,
+      visibility 0s linear .22s;
   }
 
   .sidebar__head {
@@ -163,7 +188,6 @@
     transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
   }
 
-  /* Hide native search clear button */
   .search input::-webkit-search-cancel-button,
   .search input::-webkit-search-decoration { -webkit-appearance: none; appearance: none; }
 
@@ -772,6 +796,8 @@
     border-radius: 4px;
   }
 
+  .editor__empty .btn { margin-top: 8px; }
+
   /* Icon button */
   .icon-btn {
     display: grid;
@@ -811,7 +837,7 @@
   [data-theme="dark"] .icon-sun { display: none; }
   html:not([data-theme="dark"]) .icon-moon { display: none; }
 
-  /* Floating exit-focus button (only when focus mode on & no note selected) */
+  /* Floating focus-mode exit button */
   .focus-exit {
     position: fixed;
     top: 16px;
@@ -1188,6 +1214,9 @@
   }
 
   .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     padding: 9px 16px;
     font-size: 13.5px;
     font-weight: 600;
@@ -1195,6 +1224,8 @@
     cursor: pointer;
     transition: background-color .13s ease, border-color .13s ease, color .13s ease;
   }
+
+  .btn svg { width: 14px; height: 14px; }
 
   .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
@@ -1249,14 +1280,21 @@
   .editor__preview::-webkit-scrollbar-thumb:hover,
   .quick__list::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
 
-  /* Responsive */
+  /* ============================================================
+     Responsive — on mobile the sidebar is stacked above the editor,
+     so focus mode collapses the first ROW to 0px instead of a column.
+     ============================================================ */
   @media (max-width: 760px) {
     .app {
       grid-template-columns: 1fr;
       grid-template-rows: minmax(0, 42vh) minmax(0, 1fr);
+      transition: grid-template-rows .22s ease;
     }
 
-    .app.is-focus { grid-template-columns: 1fr; grid-template-rows: 1fr; }
+    .app.is-focus {
+      grid-template-columns: 1fr;
+      grid-template-rows: 0px minmax(0, 1fr);
+    }
 
     .sidebar { border-right: none; border-bottom: 1px solid var(--border); }
     .editor__bar { padding: 12px 16px 10px; }
@@ -1264,7 +1302,7 @@
     .editor__body, .editor__preview { padding: 16px; }
     .editor__foot { padding: 8px 16px 11px; }
     .toolbar { padding: 6px 10px; }
-    .editor__stats span:first-child { display: none; }  /* hide char count on narrow screens */
+    .editor__stats span:first-child { display: none; }
   }
 
   /* Print */
@@ -1273,7 +1311,12 @@
     .sidebar, .editor__bar, .toolbar, .editor__foot,
     .toast-stack, .modal-backdrop, .context-menu,
     .quick-backdrop, .focus-exit { display: none !important; }
-    .app { display: block; height: auto; }
+    .app {
+      display: block;
+      height: auto;
+      overflow: visible;
+      grid-template-columns: none;
+    }
     .editor { display: block; }
     .editor__pane { display: block; }
     .editor__scroll { display: block; overflow: visible; }
@@ -1404,7 +1447,6 @@
         </div>
       </div>
 
-      <!-- Split button: New note -->
       <div class="split-button split-button--block" id="newNoteSplit">
         <button type="button" class="split-button__main" id="newNoteBtn">New note</button>
         <button type="button" class="split-button__toggle" id="newNoteToggle"
@@ -1463,7 +1505,6 @@
         </ul>
       </div>
 
-      <!-- Search -->
       <div class="search">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -1480,7 +1521,6 @@
         </button>
       </div>
 
-      <!-- Sort -->
       <div class="sidebar__controls">
         <label class="select">
           <span class="sr-only">Sort notes by</span>
@@ -1522,6 +1562,13 @@
         Create a note to get started. Press <kbd>⌘N</kbd> or <kbd>Ctrl</kbd>+<kbd>N</kbd>,
         or <kbd>⌘P</kbd> to find an existing note.
       </p>
+      <button type="button" class="btn btn--primary" id="emptyNewNoteBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 5v14M5 12h14"/>
+        </svg>
+        New note
+      </button>
     </div>
 
     <div class="editor__pane hidden" id="editorPane">
@@ -1532,7 +1579,7 @@
 
         <div class="editor__actions">
           <button type="button" class="icon-btn" id="focusBtn"
-                  aria-pressed="false" aria-label="Focus mode" title="Focus mode (⌘.)">
+                  aria-pressed="false" aria-label="Toggle focus mode" title="Focus mode (⌘.)">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                  stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M4 14v6h6"/>
@@ -1645,7 +1692,6 @@
         </div>
       </div>
 
-      <!-- Markdown toolbar -->
       <div class="toolbar" id="toolbar" role="toolbar" aria-label="Formatting">
         <button type="button" class="toolbar__btn" data-cmd="bold" title="Bold (⌘B)" aria-label="Bold">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
@@ -1787,7 +1833,7 @@
   </main>
 </div>
 
-<!-- Floating focus-mode exit (only shown when focus mode is on and no note is selected) -->
+<!-- Floating focus-mode exit (shown only when focus mode is on and no note is selected) -->
 <button type="button" class="icon-btn focus-exit" id="focusExitBtn"
         aria-label="Exit focus mode" title="Exit focus mode (⌘.)">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -2340,7 +2386,7 @@ function showContextMenu(x, y, items) {
   contextMenu.style.top  = '-9999px';
   contextMenu.classList.add('is-open');
 
-  // Use offsetWidth/offsetHeight so we ignore the scale(.96) transform
+  // offsetWidth/Height ignore the scale(.96) transform, so measuring is accurate
   const menuW = contextMenu.offsetWidth;
   const menuH = contextMenu.offsetHeight;
 
@@ -2424,33 +2470,34 @@ function hideContextMenu({ focusBack = false, silent = false } = {}) {
 /* ============================================================
    11. DOM refs
    ============================================================ */
-const app          = $('app');
-const listEl       = $('noteList');
-const searchInput  = $('searchInput');
-const searchClear  = $('searchClear');
-const sortSelect   = $('sortSelect');
-const noteCountEl  = $('noteCount');
-const sidebarTitle = $('sidebarTitle');
-const trashBanner  = $('trashBanner');
+const app           = $('app');
+const listEl        = $('noteList');
+const searchInput   = $('searchInput');
+const searchClear   = $('searchClear');
+const sortSelect    = $('sortSelect');
+const noteCountEl   = $('noteCount');
+const sidebarTitle  = $('sidebarTitle');
+const trashBanner   = $('trashBanner');
 const emptyTrashBtn = $('emptyTrashBtn');
-const emptyState   = $('emptyState');
-const emptyTitle   = $('emptyTitle');
-const emptyText    = $('emptyText');
-const editorPane   = $('editorPane');
-const titleInput   = $('titleInput');
-const bodyInput    = $('bodyInput');
-const previewPane  = $('previewPane');
-const previewBtn   = $('previewBtn');
-const focusBtn     = $('focusBtn');
-const focusExitBtn = $('focusExitBtn');
-const pinBtn       = $('pinBtn');
-const statusDot    = $('statusDot');
-const statusText   = $('statusText');
-const wordCountEl  = $('wordCount');
-const charCountEl  = $('charCount');
-const readTimeEl   = $('readTime');
-const importInput  = $('importInput');
-const toolbar      = $('toolbar');
+const emptyState    = $('emptyState');
+const emptyTitle    = $('emptyTitle');
+const emptyText     = $('emptyText');
+const emptyNewNoteBtn = $('emptyNewNoteBtn');
+const editorPane    = $('editorPane');
+const titleInput    = $('titleInput');
+const bodyInput     = $('bodyInput');
+const previewPane   = $('previewPane');
+const previewBtn    = $('previewBtn');
+const focusBtn      = $('focusBtn');
+const focusExitBtn  = $('focusExitBtn');
+const pinBtn        = $('pinBtn');
+const statusDot     = $('statusDot');
+const statusText    = $('statusText');
+const wordCountEl   = $('wordCount');
+const charCountEl   = $('charCount');
+const readTimeEl    = $('readTime');
+const importInput   = $('importInput');
+const toolbar       = $('toolbar');
 
 /* ============================================================
    12. Sorting & filtering
@@ -2690,6 +2737,10 @@ function renderEditor() {
       emptyTitle.textContent = 'No notes yet';
       emptyText.innerHTML = 'Create your first note to get started. Everything is saved in your browser.';
     }
+
+    // Hide "New note" button inside trash view (creating while viewing trash is confusing)
+    emptyNewNoteBtn.classList.toggle('hidden', sidebarView === 'trash');
+
     updateFocusExit();
     return;
   }
@@ -2774,7 +2825,7 @@ function applyFocusMode() {
 }
 
 function updateFocusExit() {
-  // Show the floating exit button only when focus mode is on AND no editable note is visible
+  // Show the floating exit button when focus mode is on and no editable note is visible.
   const note = getActiveNote();
   const showFloating = focusMode && (!note || isTrashed(note));
   focusExitBtn.classList.toggle('is-shown', showFloating);
@@ -2839,6 +2890,8 @@ function createNote(templateKey = 'blank') {
     }
   });
 }
+
+emptyNewNoteBtn.addEventListener('click', () => createNote('blank'));
 
 function togglePinNote(id) {
   const note = notes.find((n) => n.id === id);
@@ -2954,19 +3007,22 @@ function downloadNote(note) {
 function printNote() {
   const note = getActiveNote();
   if (!note || isTrashed(note)) return;
-  // Ensure preview is rendered for print (the print stylesheet only shows the preview)
+
+  // The print stylesheet hides the textarea and shows the preview, so make
+  // sure the preview is populated and visible before printing.
   const wasPreview = previewMode;
   if (!wasPreview) {
     previewMode = true;
     applyPreviewMode();
   }
+
   setTimeout(() => {
     window.print();
     if (!wasPreview) {
       previewMode = false;
       applyPreviewMode();
     }
-  }, 60);
+  }, 80);
 }
 
 /* ---------- Trash ---------- */
@@ -2978,7 +3034,6 @@ function trashNote(id) {
   note.pinned = false;
   note.updatedAt = Date.now();
 
-  // Choose a new active note from the same view
   const visible = sortedNotes().filter((n) => !isTrashed(n) && n.id !== id);
   activeId = visible.length ? visible[0].id : null;
 
@@ -3048,7 +3103,6 @@ async function emptyTrash() {
   if (!ok) return;
 
   notes = notes.filter((n) => !isTrashed(n));
-  // Clear the active id if it pointed to a trashed note
   if (!notes.find((n) => n.id === activeId)) activeId = null;
 
   persist();
@@ -3177,7 +3231,6 @@ function toggleLinePrefix(ta, prefix, altPrefixes = []) {
   const delta = newText.length - text.length;
   ta.value = ta.value.slice(0, lineStart) + newText + ta.value.slice(lineEnd);
 
-  // Clamp caret/selection so they stay within the line
   const clampPos = (p) => Math.max(lineStart, Math.min(lineStart + newText.length, p + delta));
   ta.selectionStart = clampPos(ta.selectionStart);
   ta.selectionEnd   = clampPos(ta.selectionEnd);
@@ -3204,13 +3257,24 @@ function applyFormat(cmd) {
     case 'ol':    toggleLinePrefix(ta, '1. ', ['- ', '* ', '+ ', '- [ ] ']); break;
     case 'task':  toggleLinePrefix(ta, '- [ ] ', ['- ', '* ', '+ ']); break;
 
+    /* Fixed: ensure a blank line before AND after the divider so it renders
+       as a proper markdown HR. Previously the prefix was often '' because
+       the caret sits right after a newline, which produced a run-on line. */
     case 'hr': {
-      const start = ta.selectionStart;
-      const end   = ta.selectionEnd;
+      const start  = ta.selectionStart;
+      const end    = ta.selectionEnd;
       const before = ta.value.slice(0, start);
       const after  = ta.value.slice(end);
-      const prefix = (before === '' || before.endsWith('\n')) ? '' : '\n';
-      const suffix = (after  === '' || after.startsWith('\n')) ? '' : '\n';
+
+      let prefix = '';
+      if (before.length > 0 && !before.endsWith('\n\n')) {
+        prefix = before.endsWith('\n') ? '\n' : '\n\n';
+      }
+      let suffix = '';
+      if (after.length > 0 && !after.startsWith('\n\n')) {
+        suffix = after.startsWith('\n') ? '\n' : '\n\n';
+      }
+
       const text = prefix + '---' + suffix;
       ta.value = before + text + after;
       ta.selectionStart = ta.selectionEnd = start + text.length;
@@ -3225,7 +3289,7 @@ function applyFormat(cmd) {
       const before = ta.value.slice(0, start);
       const after  = ta.value.slice(end);
       const padBefore = (before === '' || before.endsWith('\n')) ? '' : '\n';
-      const padAfter  = (after === '' || after.startsWith('\n')) ? '' : '\n';
+      const padAfter  = (after  === '' || after.startsWith('\n')) ? '' : '\n';
       const body = sel || 'code';
       const block = padBefore + '```\n' + body + '\n```' + padAfter;
       ta.value = before + block + after;
@@ -3252,10 +3316,8 @@ bodyInput.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && !e.shiftKey && !e.metaKey && !e.ctrlKey) {
     const { lineStart, lineEnd, text } = getCurrentLine(bodyInput);
 
-    // Only when the caret is at the end of the current line
     if (bodyInput.selectionStart !== lineEnd) return;
 
-    // Task list
     const taskMatch = text.match(/^(\s*)([-*])\s+\[([ xX])\]\s+(.*)$/);
     if (taskMatch) {
       e.preventDefault();
@@ -3270,7 +3332,6 @@ bodyInput.addEventListener('keydown', (e) => {
       return;
     }
 
-    // Bullet list
     const ulMatch = text.match(/^(\s*)([-*+])\s+(.*)$/);
     if (ulMatch) {
       e.preventDefault();
@@ -3285,7 +3346,6 @@ bodyInput.addEventListener('keydown', (e) => {
       return;
     }
 
-    // Numbered list
     const olMatch = text.match(/^(\s*)(\d+)\.\s+(.*)$/);
     if (olMatch) {
       e.preventDefault();
@@ -3300,7 +3360,6 @@ bodyInput.addEventListener('keydown', (e) => {
       return;
     }
 
-    // Blockquote
     const bqMatch = text.match(/^(\s*)>\s?(.*)$/);
     if (bqMatch) {
       e.preventDefault();
@@ -3317,7 +3376,6 @@ bodyInput.addEventListener('keydown', (e) => {
     return;
   }
 
-  // Tab / Shift+Tab — indent the current line
   if (e.key === 'Tab') {
     e.preventDefault();
     const { lineStart, lineEnd, text } = getCurrentLine(bodyInput);
@@ -3481,14 +3539,12 @@ $('trashBtn').addEventListener('click', () => {
   sidebarView = sidebarView === 'trash' ? 'notes' : 'trash';
   try { localStorage.setItem(VIEW_KEY, sidebarView); } catch {}
 
-  // Clear active selection if it isn't visible in the new view
   const note = getActiveNote();
   if (note && ((sidebarView === 'trash') !== isTrashed(note))) {
     activeId = null;
     previewMode = false;
     applyPreviewMode();
   } else if (!note) {
-    // Try to select the first note in the new view
     const visible = sortedNotes().filter((n) =>
       sidebarView === 'trash' ? isTrashed(n) : !isTrashed(n)
     );
@@ -3779,7 +3835,6 @@ function showEditorContextMenu(x, y) {
   ]);
 }
 
-/* ---- Right-click handlers ---- */
 listEl.addEventListener('contextmenu', (e) => {
   const item = e.target.closest('.note-item');
   e.preventDefault();
@@ -3869,21 +3924,18 @@ document.addEventListener('keydown', (e) => {
   const mod = e.metaKey || e.ctrlKey;
   const key = e.key.toLowerCase();
 
-  // ⌘P — quick switcher
   if (mod && key === 'p' && !e.shiftKey) {
     e.preventDefault();
     openQuickSwitcher();
     return;
   }
 
-  // ⌘N — new blank note
   if (mod && !e.shiftKey && !e.altKey && key === 'n') {
     e.preventDefault();
     createNote('blank');
     return;
   }
 
-  // ⌘K — link formatting (when editing body)
   if (mod && key === 'k') {
     if (document.activeElement === bodyInput && !previewMode) {
       e.preventDefault();
@@ -3896,7 +3948,6 @@ document.addEventListener('keydown', (e) => {
     return;
   }
 
-  // ⌘S — force save
   if (mod && key === 's') {
     e.preventDefault();
     flushSave();
@@ -3905,21 +3956,18 @@ document.addEventListener('keydown', (e) => {
     return;
   }
 
-  // ⌘D — duplicate
   if (mod && key === 'd') {
     e.preventDefault();
     if (activeId) duplicateNote(activeId);
     return;
   }
 
-  // ⌘E — toggle preview
   if (mod && key === 'e') {
     e.preventDefault();
     togglePreview();
     return;
   }
 
-  // ⌘. — focus mode
   if (mod && key === '.') {
     e.preventDefault();
     focusMode = !focusMode;
@@ -3927,7 +3975,6 @@ document.addEventListener('keydown', (e) => {
     return;
   }
 
-  // ⌘B / ⌘I / ⌘⇧X / ⌘⇧C — inline formatting
   if (mod && document.activeElement === bodyInput && !previewMode) {
     if (key === 'b' && !e.shiftKey) { e.preventDefault(); applyFormat('bold');   return; }
     if (key === 'i' && !e.shiftKey) { e.preventDefault(); applyFormat('italic'); return; }
@@ -3935,7 +3982,6 @@ document.addEventListener('keydown', (e) => {
     if (e.shiftKey && key === 'c')  { e.preventDefault(); applyFormat('code');   return; }
   }
 
-  // Escape — close menus / blur inputs
   if (e.key === 'Escape') {
     const hadOpen = document.querySelector('.is-open');
     if (hadOpen) {
