@@ -6,9 +6,6 @@
 <meta name="color-scheme" content="light dark">
 <title>Notes</title>
 <style>
-  /* ============================================================
-     Theme tokens
-     ============================================================ */
   :root {
     --accent: #2563eb;
     --accent-hover: #1d4ed8;
@@ -52,7 +49,6 @@
   }
 
   * { box-sizing: border-box; }
-
   html, body { height: 100%; }
 
   body {
@@ -65,9 +61,7 @@
   }
 
   button, input, textarea, select { font-family: inherit; }
-
   .hidden { display: none !important; }
-
   .sr-only {
     position: absolute;
     width: 1px; height: 1px;
@@ -78,19 +72,19 @@
     border: 0;
   }
 
-  /* ============================================================
-     App shell
-     ============================================================ */
+  /* App shell */
   .app {
     display: grid;
     grid-template-columns: 320px minmax(0, 1fr);
     height: 100vh;
     height: 100dvh;
+    transition: grid-template-columns .2s ease;
   }
 
-  /* ============================================================
-     Sidebar
-     ============================================================ */
+  .app.is-focus { grid-template-columns: 0 minmax(0, 1fr); }
+  .app.is-focus .sidebar { display: none; }
+
+  /* Sidebar */
   .sidebar {
     display: flex;
     flex-direction: column;
@@ -141,24 +135,17 @@
     border-radius: 999px;
   }
 
-  .sidebar__actions {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
+  .badge--danger { color: var(--danger); background: var(--danger-soft); }
 
-  /* ---------- Search ---------- */
-  .search {
-    position: relative;
-    display: flex;
-    align-items: center;
-  }
+  .sidebar__actions { display: flex; align-items: center; gap: 4px; }
+
+  /* Search */
+  .search { position: relative; display: flex; align-items: center; }
 
   .search > svg {
     position: absolute;
     left: 11px;
-    width: 15px;
-    height: 15px;
+    width: 15px; height: 15px;
     color: var(--text-faint);
     pointer-events: none;
   }
@@ -199,19 +186,10 @@
   .search__clear:hover { color: var(--text); background: var(--surface-2); }
   .search__clear svg { width: 12px; height: 12px; }
 
-  /* ---------- Sort row ---------- */
-  .sidebar__controls {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
+  /* Sort row */
+  .sidebar__controls { display: flex; align-items: center; gap: 8px; }
 
-  .select {
-    position: relative;
-    flex: 1;
-    display: flex;
-    align-items: center;
-  }
+  .select { position: relative; flex: 1; display: flex; align-items: center; }
 
   .select svg {
     position: absolute;
@@ -240,7 +218,7 @@
   .select select:hover { border-color: var(--border-strong); }
   .select select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37, 99, 235, .15); }
 
-  /* ---------- Note list ---------- */
+  /* Note list */
   .note-list {
     flex: 1;
     min-height: 0;
@@ -254,7 +232,7 @@
   .note-item {
     display: block;
     width: 100%;
-    padding: 11px 12px;
+    padding: 11px 12px 11px 16px;
     text-align: left;
     color: var(--text);
     background: none;
@@ -262,14 +240,25 @@
     border-radius: 9px;
     cursor: pointer;
     transition: background-color .13s ease;
+    position: relative;
   }
+
+  .note-item::before {
+    content: '';
+    position: absolute;
+    left: 8px;
+    top: 12px;
+    bottom: 12px;
+    width: 3px;
+    border-radius: 2px;
+    background: transparent;
+    transition: background-color .13s ease;
+  }
+
+  .note-item.has-color::before { background: var(--note-color); }
 
   .note-item:hover { background: var(--surface-2); }
-
-  .note-item:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: -2px;
-  }
+  .note-item:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 
   .note-item.is-active {
     background: var(--accent-soft);
@@ -337,9 +326,36 @@
     color: var(--text-muted);
   }
 
-  /* ============================================================
-     Split button
-     ============================================================ */
+  /* Trash view banner */
+  .trash-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin: 0 10px 6px;
+    padding: 9px 12px;
+    font-size: 12px;
+    color: var(--text-muted);
+    background: var(--surface-2);
+    border-radius: 8px;
+  }
+
+  .trash-banner button {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--danger);
+    background: none;
+    border: 0;
+    cursor: pointer;
+    padding: 3px 7px;
+    border-radius: 5px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .trash-banner button:hover { background: var(--danger-soft); }
+
+  /* Split button */
   .split-button {
     position: relative;
     display: inline-flex;
@@ -381,9 +397,7 @@
   .split-button.is-open .split-button__toggle { background: var(--accent-hover); border-color: var(--accent-hover); }
   .split-button.is-open .split-button__toggle svg { transform: rotate(180deg); }
 
-  /* ============================================================
-     Dropdown menu (shared)
-     ============================================================ */
+  /* Dropdown menu */
   .menu-wrap { position: relative; display: inline-flex; }
 
   .menu {
@@ -448,11 +462,7 @@
   .menu [role="menuitem"].is-danger:hover,
   .menu [role="menuitem"].is-danger:focus-visible { background: var(--danger-soft); }
 
-  .menu__sep {
-    height: 1px;
-    margin: 5px 6px;
-    background: var(--border);
-  }
+  .menu__sep { height: 1px; margin: 5px 6px; background: var(--border); }
 
   .menu__shortcut {
     margin-left: auto;
@@ -461,17 +471,11 @@
     color: var(--text-faint);
   }
 
-  /* ============================================================
-     Ripple — shared host styles
-     ============================================================ */
-  .icon-btn,
-  .btn,
-  .split-button button,
-  .menu [role="menuitem"],
-  .note-item,
-  .toast__action,
-  .search__clear,
-  .context-menu__item {
+  /* Ripple hosts */
+  .icon-btn, .btn, .split-button button,
+  .menu [role="menuitem"], .note-item, .toast__action,
+  .search__clear, .context-menu__item, .toolbar__btn,
+  .quick-switcher__item, .trash-banner button {
     position: relative;
     overflow: hidden;
     -webkit-tap-highlight-color: transparent;
@@ -496,9 +500,7 @@
     to { transform: scale(1); opacity: 0; }
   }
 
-  /* ============================================================
-     Editor
-     ============================================================ */
+  /* Editor */
   .editor {
     display: flex;
     flex-direction: column;
@@ -506,6 +508,7 @@
     min-height: 0;
     background: var(--surface);
     transition: background-color .2s ease;
+    position: relative;
   }
 
   .editor__pane {
@@ -540,10 +543,54 @@
 
   .editor__actions { display: flex; align-items: center; gap: 2px; }
 
+  /* Markdown toolbar */
+  .toolbar {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 6px 12px;
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .toolbar::-webkit-scrollbar { display: none; }
+
+  .toolbar__btn {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 30px; height: 30px;
+    color: var(--text-muted);
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color .13s ease, color .13s ease, border-color .13s ease;
+  }
+
+  .toolbar__btn svg { width: 15px; height: 15px; }
+
+  .toolbar__btn:hover {
+    color: var(--accent);
+    background: var(--surface);
+    border-color: var(--border);
+  }
+
+  .toolbar__btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  .toolbar__sep {
+    flex: none;
+    width: 1px;
+    height: 20px;
+    margin: 0 4px;
+    background: var(--border);
+  }
+
   .editor__scroll { flex: 1; min-height: 0; display: flex; }
 
-  .editor__body,
-  .editor__preview {
+  .editor__body, .editor__preview {
     flex: 1;
     min-height: 0;
     overflow-y: auto;
@@ -576,6 +623,12 @@
 
   .editor__status { display: inline-flex; align-items: center; gap: 6px; }
 
+  .editor__stats {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+  }
+
   .dot {
     width: 6px; height: 6px;
     border-radius: 50%;
@@ -585,17 +638,13 @@
 
   .dot.is-saving { background: var(--warn); }
 
-  /* ---------- Markdown preview ---------- */
+  /* Markdown preview */
   .editor__preview { padding-top: 22px; }
   .editor__preview > *:first-child { margin-top: 0; }
   .editor__preview > *:last-child { margin-bottom: 0; }
 
-  .editor__preview h1,
-  .editor__preview h2,
-  .editor__preview h3,
-  .editor__preview h4,
-  .editor__preview h5,
-  .editor__preview h6 {
+  .editor__preview h1, .editor__preview h2, .editor__preview h3,
+  .editor__preview h4, .editor__preview h5, .editor__preview h6 {
     margin: 1.4em 0 .55em;
     font-weight: 700;
     line-height: 1.3;
@@ -605,21 +654,12 @@
   .editor__preview h1 { font-size: 1.7em; }
   .editor__preview h2 { font-size: 1.4em; }
   .editor__preview h3 { font-size: 1.18em; }
-  .editor__preview h4,
-  .editor__preview h5,
-  .editor__preview h6 { font-size: 1em; }
-
+  .editor__preview h4, .editor__preview h5, .editor__preview h6 { font-size: 1em; }
   .editor__preview p { margin: 0 0 .9em; }
-
-  .editor__preview ul,
-  .editor__preview ol { margin: 0 0 .9em; padding-left: 1.4em; }
-
+  .editor__preview ul, .editor__preview ol { margin: 0 0 .9em; padding-left: 1.4em; }
   .editor__preview li { margin: .2em 0; }
 
-  .editor__preview .task-list {
-    padding-left: .2em;
-    list-style: none;
-  }
+  .editor__preview .task-list { padding-left: .2em; list-style: none; }
 
   .editor__preview .task-list li {
     display: flex;
@@ -684,7 +724,7 @@
     font-style: italic;
   }
 
-  /* ---------- Empty state ---------- */
+  /* Empty state */
   .editor__empty {
     flex: 1;
     display: flex;
@@ -707,7 +747,7 @@
 
   .editor__empty p {
     margin: 0;
-    max-width: 320px;
+    max-width: 340px;
     font-size: 13.5px;
     line-height: 1.65;
     color: var(--text-muted);
@@ -726,15 +766,12 @@
     border-radius: 4px;
   }
 
-  /* ============================================================
-     Icon button
-     ============================================================ */
+  /* Icon button */
   .icon-btn {
     display: grid;
     place-items: center;
     flex: none;
-    width: 34px;
-    height: 34px;
+    width: 34px; height: 34px;
     color: var(--text-muted);
     background: none;
     border: 1px solid transparent;
@@ -768,13 +805,10 @@
   [data-theme="dark"] .icon-sun { display: none; }
   html:not([data-theme="dark"]) .icon-moon { display: none; }
 
-  /* ============================================================
-     Context menu
-     ============================================================ */
+  /* Context menu */
   .context-menu {
     position: fixed;
-    left: 0;
-    top: 0;
+    left: 0; top: 0;
     z-index: 200;
     min-width: 220px;
     max-width: min(90vw, 320px);
@@ -823,8 +857,7 @@
 
   .context-menu__item svg {
     flex: none;
-    width: 15px;
-    height: 15px;
+    width: 15px; height: 15px;
     color: var(--text-muted);
   }
 
@@ -857,9 +890,183 @@
     background: var(--border);
   }
 
-  /* ============================================================
-     Toast
-     ============================================================ */
+  /* Color swatch row */
+  .context-menu__colors {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 9px 8px;
+  }
+
+  .context-menu__colors-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    margin-right: 2px;
+  }
+
+  .context-menu__swatch {
+    flex: none;
+    width: 20px; height: 20px;
+    padding: 0;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    background: var(--swatch);
+    transition: transform .1s ease, border-color .1s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .context-menu__swatch:hover { transform: scale(1.12); }
+
+  .context-menu__swatch.is-selected {
+    border-color: var(--text);
+    box-shadow: inset 0 0 0 2px var(--surface);
+  }
+
+  .context-menu__swatch.is-none {
+    background:
+      linear-gradient(45deg, transparent 45%, var(--danger) 45%, var(--danger) 55%, transparent 55%),
+      var(--surface-2);
+    border: 1px solid var(--border-strong);
+  }
+
+  /* Quick switcher */
+  .quick-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 260;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 12vh 20px 20px;
+    background: rgba(15, 23, 42, .45);
+    backdrop-filter: blur(3px);
+    animation: fade-in .14s ease;
+  }
+
+  .quick {
+    width: 100%;
+    max-width: 560px;
+    display: flex;
+    flex-direction: column;
+    max-height: 68vh;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 14px;
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+    animation: modal-in .18s cubic-bezier(.2, .8, .3, 1);
+  }
+
+  .quick__input {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .quick__input svg {
+    flex: none;
+    width: 18px; height: 18px;
+    color: var(--text-faint);
+  }
+
+  .quick__input input {
+    flex: 1;
+    min-width: 0;
+    padding: 0;
+    font-size: 16px;
+    color: var(--text);
+    background: none;
+    border: 0;
+    outline: none;
+  }
+
+  .quick__input input::placeholder { color: var(--text-faint); }
+
+  .quick__list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    margin: 0;
+    padding: 6px;
+    list-style: none;
+  }
+
+  .quick-switcher__item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 9px 11px;
+    font-size: 14px;
+    text-align: left;
+    color: var(--text);
+    background: none;
+    border: 0;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+
+  .quick-switcher__item:hover,
+  .quick-switcher__item.is-focused {
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  .quick-switcher__item svg {
+    flex: none;
+    width: 15px; height: 15px;
+    color: var(--text-muted);
+  }
+
+  .quick-switcher__item.is-focused svg { color: var(--accent); }
+
+  .quick-switcher__text { flex: 1; min-width: 0; }
+
+  .quick-switcher__title {
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .quick-switcher__meta {
+    font-size: 11.5px;
+    color: var(--text-faint);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .quick__hint {
+    padding: 8px 14px;
+    font-size: 11.5px;
+    color: var(--text-faint);
+    background: var(--surface-2);
+    border-top: 1px solid var(--border);
+  }
+
+  .quick__hint kbd {
+    display: inline-block;
+    padding: 0 4px;
+    font-family: inherit;
+    font-size: 10.5px;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-bottom-width: 2px;
+    border-radius: 3px;
+  }
+
+  /* Toast */
   .toast-stack {
     position: fixed;
     left: 50%;
@@ -920,9 +1127,7 @@
     to { opacity: 0; transform: translateY(8px) scale(.98); }
   }
 
-  /* ============================================================
-     Modal
-     ============================================================ */
+  /* Modal */
   .modal-backdrop {
     position: fixed;
     inset: 0;
@@ -1008,16 +1213,16 @@
     to   { opacity: 1; transform: translateY(0) scale(1); }
   }
 
-  /* ============================================================
-     Scrollbars
-     ============================================================ */
+  /* Scrollbars */
   .note-list::-webkit-scrollbar,
   .editor__body::-webkit-scrollbar,
-  .editor__preview::-webkit-scrollbar { width: 10px; }
+  .editor__preview::-webkit-scrollbar,
+  .quick__list::-webkit-scrollbar { width: 10px; }
 
   .note-list::-webkit-scrollbar-thumb,
   .editor__body::-webkit-scrollbar-thumb,
-  .editor__preview::-webkit-scrollbar-thumb {
+  .editor__preview::-webkit-scrollbar-thumb,
+  .quick__list::-webkit-scrollbar-thumb {
     background: var(--border);
     border: 3px solid var(--surface);
     border-radius: 10px;
@@ -1025,11 +1230,10 @@
 
   .note-list::-webkit-scrollbar-thumb:hover,
   .editor__body::-webkit-scrollbar-thumb:hover,
-  .editor__preview::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
+  .editor__preview::-webkit-scrollbar-thumb:hover,
+  .quick__list::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
 
-  /* ============================================================
-     Responsive
-     ============================================================ */
+  /* Responsive */
   @media (max-width: 760px) {
     .app {
       grid-template-columns: 1fr;
@@ -1041,11 +1245,31 @@
     .editor__title { font-size: 18px; }
     .editor__body, .editor__preview { padding: 16px; }
     .editor__foot { padding: 8px 16px 11px; }
+    .toolbar { padding: 6px 10px; }
   }
 
-  /* ============================================================
-     Reduced motion
-     ============================================================ */
+  /* Print */
+  @media print {
+    body { background: #fff; color: #000; }
+    .sidebar, .editor__bar, .toolbar, .editor__foot,
+    .toast-stack, .modal-backdrop, .context-menu,
+    .quick-backdrop { display: none !important; }
+    .app { display: block; height: auto; }
+    .editor { display: block; }
+    .editor__pane { display: block; }
+    .editor__scroll { display: block; overflow: visible; }
+    .editor__body, .editor__preview {
+      display: block !important;
+      overflow: visible;
+      padding: 0;
+      height: auto;
+    }
+    .editor__preview { display: block !important; }
+    .editor__body { display: none !important; }
+    .editor__title { font-size: 24px; padding: 0 0 12px; border-bottom: 1px solid #ccc; margin-bottom: 16px; }
+  }
+
+  /* Reduced motion */
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
       animation-duration: .001ms !important;
@@ -1058,7 +1282,7 @@
 </head>
 <body>
 
-<div class="app">
+<div class="app" id="app">
 
   <!-- ===================== Sidebar ===================== -->
   <aside class="sidebar">
@@ -1067,10 +1291,21 @@
 
       <div class="sidebar__row">
         <h1 class="sidebar__title">
-          Notes <span class="badge" id="noteCount">0</span>
+          <span id="sidebarTitle">Notes</span>
+          <span class="badge" id="noteCount">0</span>
         </h1>
 
         <div class="sidebar__actions">
+          <button type="button" class="icon-btn" id="trashBtn"
+                  aria-label="Toggle trash" title="Trash">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M3 6h18"/>
+              <path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/>
+              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+            </svg>
+          </button>
+
           <button type="button" class="icon-btn" id="themeBtn"
                   aria-label="Toggle dark mode" title="Toggle dark mode">
             <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -1094,6 +1329,18 @@
               </svg>
             </button>
             <ul class="menu" role="menu" aria-label="App menu">
+              <li role="none">
+                <button type="button" role="menuitem" id="quickSwitcherBtn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                       stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="11" cy="11" r="8"/>
+                    <path d="M21 21l-4.35-4.35"/>
+                  </svg>
+                  Quick switcher
+                  <span class="menu__shortcut">⌘P</span>
+                </button>
+              </li>
+              <li role="none"><div class="menu__sep"></div></li>
               <li role="none">
                 <button type="button" role="menuitem" id="exportAllBtn">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -1217,6 +1464,7 @@
             <option value="updated">Last updated</option>
             <option value="created">Date created</option>
             <option value="title">Title (A–Z)</option>
+            <option value="color">Color</option>
           </select>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -1225,6 +1473,12 @@
         </label>
       </div>
     </header>
+
+    <!-- Trash banner (shown in trash view) -->
+    <div class="trash-banner hidden" id="trashBanner">
+      <span>Deleted notes are kept for 30 days.</span>
+      <button type="button" id="emptyTrashBtn">Empty trash</button>
+    </div>
 
     <ul class="note-list" id="noteList" role="list"></ul>
   </aside>
@@ -1243,7 +1497,8 @@
       </svg>
       <h2 id="emptyTitle">No note selected</h2>
       <p id="emptyText">
-        Create a note to get started. Press <kbd>⌘N</kbd> or <kbd>Ctrl</kbd>+<kbd>N</kbd>.
+        Create a note to get started. Press <kbd>⌘N</kbd> or <kbd>Ctrl</kbd>+<kbd>N</kbd>,
+        or <kbd>⌘P</kbd> to find an existing note.
       </p>
     </div>
 
@@ -1255,6 +1510,17 @@
                placeholder="Untitled note" aria-label="Note title" autocomplete="off">
 
         <div class="editor__actions">
+          <button type="button" class="icon-btn" id="focusBtn"
+                  aria-pressed="false" aria-label="Focus mode" title="Focus mode (⌘.)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M4 14v6h6"/>
+              <path d="M20 10V4h-6"/>
+              <path d="M4 4l7 7"/>
+              <path d="M20 20l-7-7"/>
+            </svg>
+          </button>
+
           <button type="button" class="icon-btn" id="previewBtn"
                   aria-pressed="false" aria-label="Toggle markdown preview"
                   title="Preview markdown (⌘E)">
@@ -1307,6 +1573,19 @@
                 </button>
               </li>
               <li role="none">
+                <button type="button" role="menuitem" id="shareBtn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                       stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="18" cy="5" r="3"/>
+                    <circle cx="6" cy="12" r="3"/>
+                    <circle cx="18" cy="19" r="3"/>
+                    <path d="M8.59 13.51l6.83 3.98"/>
+                    <path d="M15.41 6.51l-6.82 3.98"/>
+                  </svg>
+                  Share…
+                </button>
+              </li>
+              <li role="none">
                 <button type="button" role="menuitem" id="exportOneBtn">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -1315,6 +1594,18 @@
                     <path d="M12 15V3"/>
                   </svg>
                   Download as .md
+                </button>
+              </li>
+              <li role="none">
+                <button type="button" role="menuitem" id="printBtn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                       stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M6 9V2h12v7"/>
+                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+                    <rect x="6" y="14" width="12" height="8" rx="2"/>
+                  </svg>
+                  Print note
+                  <span class="menu__shortcut">⌘P</span>
                 </button>
               </li>
               <li role="none"><div class="menu__sep"></div></li>
@@ -1334,6 +1625,125 @@
         </div>
       </div>
 
+      <!-- Markdown toolbar -->
+      <div class="toolbar" id="toolbar" role="toolbar" aria-label="Formatting">
+        <button type="button" class="toolbar__btn" data-cmd="bold" title="Bold (⌘B)" aria-label="Bold">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/>
+            <path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/>
+          </svg>
+        </button>
+        <button type="button" class="toolbar__btn" data-cmd="italic" title="Italic (⌘I)" aria-label="Italic">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M19 4h-9M14 20H5M15 4L9 20"/>
+          </svg>
+        </button>
+        <button type="button" class="toolbar__btn" data-cmd="strike" title="Strikethrough (⌘⇧X)" aria-label="Strikethrough">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M16 4H9a3 3 0 0 0-2.83 4"/>
+            <path d="M14 12a4 4 0 0 1 0 8H6"/>
+            <path d="M4 12h16"/>
+          </svg>
+        </button>
+        <button type="button" class="toolbar__btn" data-cmd="code" title="Inline code" aria-label="Inline code">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M16 18l6-6-6-6"/>
+            <path d="M8 6l-6 6 6 6"/>
+          </svg>
+        </button>
+        <button type="button" class="toolbar__btn" data-cmd="link" title="Link (⌘K)" aria-label="Link">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+          </svg>
+        </button>
+
+        <div class="toolbar__sep"></div>
+
+        <button type="button" class="toolbar__btn" data-cmd="h1" title="Heading 1" aria-label="Heading 1">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 12h8"/>
+            <path d="M4 18V6"/>
+            <path d="M12 18V6"/>
+            <path d="M17 12l3-2v8"/>
+          </svg>
+        </button>
+        <button type="button" class="toolbar__btn" data-cmd="h2" title="Heading 2" aria-label="Heading 2">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 12h8"/>
+            <path d="M4 18V6"/>
+            <path d="M12 18V6"/>
+            <path d="M21 18h-4c0-4 4-3 4-6 0-1.5-1-2-2-2-1 0-1.5.5-2 1"/>
+          </svg>
+        </button>
+        <button type="button" class="toolbar__btn" data-cmd="quote" title="Quote" aria-label="Quote">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M6 17h3l2-4V7H5v6h3z"/>
+            <path d="M15 17h3l2-4V7h-6v6h3z"/>
+          </svg>
+        </button>
+
+        <div class="toolbar__sep"></div>
+
+        <button type="button" class="toolbar__btn" data-cmd="ul" title="Bulleted list" aria-label="Bulleted list">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M8 6h13"/>
+            <path d="M8 12h13"/>
+            <path d="M8 18h13"/>
+            <circle cx="3.5" cy="6" r="1.2" fill="currentColor" stroke="none"/>
+            <circle cx="3.5" cy="12" r="1.2" fill="currentColor" stroke="none"/>
+            <circle cx="3.5" cy="18" r="1.2" fill="currentColor" stroke="none"/>
+          </svg>
+        </button>
+        <button type="button" class="toolbar__btn" data-cmd="ol" title="Numbered list" aria-label="Numbered list">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M10 6h11"/>
+            <path d="M10 12h11"/>
+            <path d="M10 18h11"/>
+            <path d="M4 6h1v4"/>
+            <path d="M4 10h2"/>
+            <path d="M6 18H4c0-1 2-1 2-2 0-.5-.4-1-1-1s-1 .5-1 1"/>
+          </svg>
+        </button>
+        <button type="button" class="toolbar__btn" data-cmd="task" title="Task list" aria-label="Task list">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="5" width="6" height="6" rx="1.5"/>
+            <path d="M4.5 8l1.3 1.3L7.8 7"/>
+            <path d="M14 8h7"/>
+            <rect x="3" y="13" width="6" height="6" rx="1.5"/>
+            <path d="M14 16h7"/>
+          </svg>
+        </button>
+
+        <div class="toolbar__sep"></div>
+
+        <button type="button" class="toolbar__btn" data-cmd="hr" title="Divider" aria-label="Divider">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M3 12h18"/>
+          </svg>
+        </button>
+        <button type="button" class="toolbar__btn" data-cmd="codeblock" title="Code block" aria-label="Code block">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+            <path d="M9 9l-2 3 2 3"/>
+            <path d="M15 9l2 3-2 3"/>
+          </svg>
+        </button>
+      </div>
+
       <div class="editor__scroll">
         <textarea class="editor__body" id="bodyInput"
                   placeholder="Start writing… Markdown supported."
@@ -1346,7 +1756,11 @@
           <span class="dot" id="statusDot"></span>
           <span id="statusText">Saved</span>
         </span>
-        <span id="wordCount">0 words</span>
+        <span class="editor__stats">
+          <span id="charCount">0 chars</span>
+          <span id="wordCount">0 words</span>
+          <span id="readTime">0 min read</span>
+        </span>
       </div>
     </div>
 
@@ -1357,6 +1771,7 @@
 
 <div class="toast-stack" id="toastStack" aria-live="polite" aria-atomic="false"></div>
 
+<!-- Confirm dialog -->
 <div class="modal-backdrop hidden" id="modalBackdrop">
   <div class="modal" role="dialog" aria-modal="true"
        aria-labelledby="modalTitle" aria-describedby="modalDesc">
@@ -1369,16 +1784,38 @@
   </div>
 </div>
 
+<!-- Quick switcher -->
+<div class="quick-backdrop hidden" id="quickBackdrop">
+  <div class="quick" role="dialog" aria-modal="true" aria-label="Quick switcher">
+    <div class="quick__input">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="11" cy="11" r="8"/>
+        <path d="M21 21l-4.35-4.35"/>
+      </svg>
+      <input type="text" id="quickInput" placeholder="Find a note…"
+             aria-label="Search notes" autocomplete="off" spellcheck="false">
+    </div>
+    <ul class="quick__list" id="quickList" role="listbox"></ul>
+    <div class="quick__hint">
+      <kbd>↑</kbd> <kbd>↓</kbd> navigate · <kbd>↵</kbd> open · <kbd>Esc</kbd> close
+    </div>
+  </div>
+</div>
+
 <div class="context-menu" id="contextMenu" role="menu" aria-hidden="true"></div>
 
 <script>
 /* ============================================================
    1. Constants & state
    ============================================================ */
-const STORAGE_KEY = 'notes-app-v3';
+const STORAGE_KEY = 'notes-app-v4';
 const THEME_KEY   = 'notes-theme';
 const SORT_KEY    = 'notes-sort';
+const VIEW_KEY    = 'notes-view';
+const FOCUS_KEY   = 'notes-focus';
 const SAVE_DELAY  = 450;
+const TRASH_TTL   = 30 * 24 * 60 * 60 * 1000; // 30 days
 
 const TEMPLATES = {
   blank:   { title: '', body: '' },
@@ -1396,16 +1833,28 @@ const TEMPLATES = {
   }
 };
 
+const COLORS = [
+  { name: 'Default', hex: '' },
+  { name: 'Red',     hex: '#ef4444' },
+  { name: 'Orange',  hex: '#f97316' },
+  { name: 'Yellow',  hex: '#eab308' },
+  { name: 'Green',   hex: '#22c55e' },
+  { name: 'Blue',    hex: '#3b82f6' },
+  { name: 'Purple',  hex: '#a855f7' }
+];
+
 const IS_MAC = /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent);
 
-let notes       = [];
-let activeId    = null;
-let query       = '';
-let sortMode    = 'updated';
-let previewMode = false;
-let saveTimer   = null;
-let lastDeleted = null;
+let notes        = [];
+let activeId     = null;
+let query        = '';
+let sortMode     = 'updated';
+let sidebarView  = 'notes';        // 'notes' | 'trash'
+let previewMode  = false;
+let focusMode    = false;
+let saveTimer    = null;
 let listResortTimer = null;
+let lastDeleted  = null;
 
 const $ = (id) => document.getElementById(id);
 
@@ -1424,14 +1873,16 @@ const ICON = {
   download:  svg('<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/>'),
   upload:    svg('<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/>'),
   del:       svg('<path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>'),
+  restore:   svg('<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/>'),
   newNote:   svg('<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M12 18v-6"/><path d="M9 15h6"/>'),
   meeting:   svg('<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>'),
   todo:      svg('<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>'),
   idea:      svg('<path d="M9 18h6"/><path d="M10 22h4"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/>'),
   eye:       svg('<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>'),
   edit:      svg('<path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4z"/>'),
-  sun:       svg('<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>'),
-  moon:      svg('<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>')
+  print:     svg('<path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="2"/>'),
+  share:     svg('<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.59 13.51l6.83 3.98"/><path d="M15.41 6.51l-6.82 3.98"/>'),
+  doc:       svg('<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/>')
 };
 
 /* ============================================================
@@ -1489,6 +1940,10 @@ function getActiveNote() {
   return notes.find((n) => n.id === activeId) || null;
 }
 
+function isTrashed(note) {
+  return !!note.deletedAt;
+}
+
 /* ============================================================
    4. Persistence
    ============================================================ */
@@ -1498,6 +1953,7 @@ function loadNotes() {
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
+
     return parsed
       .filter((n) => n && typeof n === 'object')
       .map((n) => ({
@@ -1505,6 +1961,8 @@ function loadNotes() {
         title:     typeof n.title === 'string' ? n.title : '',
         body:      typeof n.body === 'string' ? n.body : '',
         pinned:    !!n.pinned,
+        color:     typeof n.color === 'string' ? n.color : '',
+        deletedAt: Number(n.deletedAt) || 0,
         createdAt: Number(n.createdAt) || Date.now(),
         updatedAt: Number(n.updatedAt) || Date.now()
       }));
@@ -1517,29 +1975,36 @@ function persist() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
     return true;
-  } catch {
+  } catch (e) {
+    // Storage full or blocked — surface to the user once per session
+    if (!persist._warned) {
+      persist._warned = true;
+      toast('Could not save — storage may be full');
+    }
     return false;
   }
+}
+
+function purgeOldTrash() {
+  const now = Date.now();
+  const before = notes.length;
+  notes = notes.filter((n) => !isTrashed(n) || (now - n.deletedAt) < TRASH_TTL);
+  return notes.length !== before;
 }
 
 /* ============================================================
    5. Theme
    ============================================================ */
 function applyTheme(theme) {
-  if (theme === 'dark') {
-    document.documentElement.setAttribute('data-theme', 'dark');
-  } else {
-    document.documentElement.removeAttribute('data-theme');
-  }
+  if (theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+  else document.documentElement.removeAttribute('data-theme');
   try { localStorage.setItem(THEME_KEY, theme); } catch {}
 }
 
 function initTheme() {
   let theme;
   try { theme = localStorage.getItem(THEME_KEY); } catch {}
-  if (!theme) {
-    theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-  }
+  if (!theme) theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   applyTheme(theme);
 }
 
@@ -1552,31 +2017,20 @@ $('themeBtn').addEventListener('click', () => {
    6. Ripple — global delegation
    ============================================================ */
 const RIPPLE_SELECTOR = [
-  '.icon-btn',
-  '.btn',
-  '.split-button__main',
-  '.split-button__toggle',
-  '.menu [role="menuitem"]',
-  '.note-item',
-  '.toast__action',
-  '.search__clear',
-  '.context-menu__item'
+  '.icon-btn', '.btn', '.split-button__main', '.split-button__toggle',
+  '.menu [role="menuitem"]', '.note-item', '.toast__action', '.search__clear',
+  '.context-menu__item', '.toolbar__btn', '.quick-switcher__item',
+  '.trash-banner button', '.context-menu__swatch'
 ].join(',');
 
-/* Elements that sit on light backgrounds get a darker ripple. */
 const RIPPLE_DARK_SELECTOR = [
-  '.icon-btn',
-  '.btn--ghost',
-  '.note-item',
-  '.toast__action',
-  '.search__clear',
-  '.context-menu__item',
-  '.menu [role="menuitem"]'
+  '.icon-btn', '.btn--ghost', '.note-item', '.toast__action', '.search__clear',
+  '.context-menu__item', '.menu [role="menuitem"]', '.toolbar__btn',
+  '.quick-switcher__item', '.trash-banner button', '.context-menu__swatch'
 ].join(',');
 
 function spawnRipple(el, x, y, { dark = false } = {}) {
   const rect = el.getBoundingClientRect();
-
   x = Math.max(0, Math.min(x, rect.width));
   y = Math.max(0, Math.min(y, rect.height));
 
@@ -1587,13 +2041,12 @@ function spawnRipple(el, x, y, { dark = false } = {}) {
 
   const ripple = document.createElement('span');
   ripple.className = dark ? 'ripple ripple--dark' : 'ripple';
-  ripple.style.width  = ripple.style.height = radius * 2 + 'px';
-  ripple.style.left   = x - radius + 'px';
-  ripple.style.top    = y - radius + 'px';
+  ripple.style.width = ripple.style.height = radius * 2 + 'px';
+  ripple.style.left  = x - radius + 'px';
+  ripple.style.top   = y - radius + 'px';
 
   el.appendChild(ripple);
   ripple.addEventListener('animationend', () => ripple.remove(), { once: true });
-  // Safety net in case animationend is missed
   setTimeout(() => ripple.remove(), 800);
 }
 
@@ -1655,7 +2108,6 @@ function toast(message, { action, duration = 4500 } = {}) {
 
   toastStack.appendChild(el);
   timer = setTimeout(dismiss, duration);
-
   return dismiss;
 }
 
@@ -1683,7 +2135,6 @@ function confirmDialog({ title, message, confirmLabel = 'Confirm', danger = true
 
     modalBackdrop.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
-
     requestAnimationFrame(() => modalConfirm.focus());
   });
 }
@@ -1695,9 +2146,7 @@ function closeModal(result) {
   const resolve = modalResolve;
   modalResolve = null;
 
-  if (lastFocused && lastFocused.isConnected) {
-    lastFocused.focus({ preventScroll: true });
-  }
+  if (lastFocused && lastFocused.isConnected) lastFocused.focus({ preventScroll: true });
   lastFocused = null;
 
   if (resolve) resolve(result);
@@ -1705,7 +2154,6 @@ function closeModal(result) {
 
 modalCancel.addEventListener('click', () => closeModal(false));
 modalConfirm.addEventListener('click', () => closeModal(true));
-
 modalBackdrop.addEventListener('mousedown', (e) => {
   if (e.target === modalBackdrop) closeModal(false);
 });
@@ -1713,20 +2161,12 @@ modalBackdrop.addEventListener('mousedown', (e) => {
 modalBackdrop.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); closeModal(false); return; }
   if (e.key !== 'Tab') return;
-
   const focusables = [...modalBackdrop.querySelectorAll('button:not([disabled])')];
   if (!focusables.length) return;
-
   const first = focusables[0];
   const last  = focusables[focusables.length - 1];
-
-  if (e.shiftKey && document.activeElement === first) {
-    e.preventDefault();
-    last.focus();
-  } else if (!e.shiftKey && document.activeElement === last) {
-    e.preventDefault();
-    first.focus();
-  }
+  if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+  else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
 });
 
 /* ============================================================
@@ -1735,12 +2175,11 @@ modalBackdrop.addEventListener('keydown', (e) => {
 function wireMenu(wrap, trigger, { onSelect } = {}) {
   const menu  = wrap.querySelector('.menu');
   const items = [...menu.querySelectorAll('[role="menuitem"]')];
-
   const isOpen = () => wrap.classList.contains('is-open');
 
   function closeAllExcept(self) {
     document.querySelectorAll('.is-open').forEach((el) => {
-      if (el !== self) {
+      if (el !== self && !el.classList.contains('context-menu')) {
         el.classList.remove('is-open');
         const t = el.querySelector('[aria-expanded="true"]');
         if (t) t.setAttribute('aria-expanded', 'false');
@@ -1760,51 +2199,23 @@ function wireMenu(wrap, trigger, { onSelect } = {}) {
     if (focusTrigger && trigger.isConnected) trigger.focus();
   }
 
-  // NOTE: no stopPropagation — this lets the doc-level click handler
-  // close other menus correctly.
-  trigger.addEventListener('click', () => {
-    isOpen() ? close() : open();
-  });
+  trigger.addEventListener('click', () => { isOpen() ? close() : open(); });
 
   trigger.addEventListener('keydown', (e) => {
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      open();
-      items[0]?.focus();
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      open();
-      items[items.length - 1]?.focus();
-    } else if (e.key === 'Escape' && isOpen()) {
-      e.preventDefault();
-      e.stopPropagation();
-      close({ focusTrigger: true });
-    }
+    if (e.key === 'ArrowDown') { e.preventDefault(); open(); items[0]?.focus(); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); open(); items[items.length - 1]?.focus(); }
+    else if (e.key === 'Escape' && isOpen()) { e.preventDefault(); e.stopPropagation(); close({ focusTrigger: true }); }
   });
 
   menu.addEventListener('keydown', (e) => {
     const i = items.indexOf(document.activeElement);
     if (i === -1) return;
-
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      items[(i + 1) % items.length].focus();
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      items[(i - 1 + items.length) % items.length].focus();
-    } else if (e.key === 'Home') {
-      e.preventDefault();
-      items[0].focus();
-    } else if (e.key === 'End') {
-      e.preventDefault();
-      items[items.length - 1].focus();
-    } else if (e.key === 'Escape') {
-      e.preventDefault();
-      e.stopPropagation();
-      close({ focusTrigger: true });
-    } else if (e.key === 'Tab') {
-      close();
-    }
+    if (e.key === 'ArrowDown') { e.preventDefault(); items[(i + 1) % items.length].focus(); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); items[(i - 1 + items.length) % items.length].focus(); }
+    else if (e.key === 'Home') { e.preventDefault(); items[0].focus(); }
+    else if (e.key === 'End') { e.preventDefault(); items[items.length - 1].focus(); }
+    else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close({ focusTrigger: true }); }
+    else if (e.key === 'Tab') close();
   });
 
   items.forEach((item) => {
@@ -1835,7 +2246,6 @@ let lastContextFocus = null;
 
 function showContextMenu(x, y, items) {
   hideContextMenu({ silent: true });
-
   contextMenu.innerHTML = '';
 
   items.forEach((item) => {
@@ -1844,6 +2254,35 @@ function showContextMenu(x, y, items) {
       sep.className = 'context-menu__sep';
       sep.setAttribute('role', 'separator');
       contextMenu.appendChild(sep);
+      return;
+    }
+
+    if (item.type === 'colors') {
+      const row = document.createElement('div');
+      row.className = 'context-menu__colors';
+      const label = document.createElement('span');
+      label.className = 'context-menu__colors-label';
+      label.textContent = 'Color';
+      row.appendChild(label);
+
+      COLORS.forEach((c) => {
+        const sw = document.createElement('button');
+        sw.type = 'button';
+        sw.className = 'context-menu__swatch'
+          + (c.hex ? '' : ' is-none')
+          + (item.current === c.hex ? ' is-selected' : '');
+        sw.setAttribute('aria-label', c.name);
+        sw.title = c.name;
+        sw.dataset.hex = c.hex;
+        if (c.hex) sw.style.setProperty('--swatch', c.hex);
+        sw.addEventListener('click', () => {
+          hideContextMenu();
+          setTimeout(() => item.onPick?.(c.hex), 0);
+        });
+        row.appendChild(sw);
+      });
+
+      contextMenu.appendChild(row);
       return;
     }
 
@@ -1858,7 +2297,6 @@ function showContextMenu(x, y, items) {
 
     btn.addEventListener('click', () => {
       hideContextMenu();
-      // Let the menu close before the action runs so dialogs see a clean state
       setTimeout(() => item.action?.(), 0);
     });
 
@@ -1868,41 +2306,32 @@ function showContextMenu(x, y, items) {
   lastContextFocus = document.activeElement;
 
   contextMenu.setAttribute('aria-hidden', 'false');
+  contextMenu.style.left = '-9999px';
+  contextMenu.style.top  = '-9999px';
   contextMenu.classList.add('is-open');
-
-  // Position (viewport-relative because position: fixed)
-  contextMenu.style.left = '0px';
-  contextMenu.style.top  = '0px';
 
   const rect = contextMenu.getBoundingClientRect();
   const pad  = 8;
   const vw   = window.innerWidth;
   const vh   = window.innerHeight;
 
-  let left = x;
-  let top  = y;
-
+  let left = x, top = y;
   if (left + rect.width + pad > vw)  left = Math.max(pad, vw - rect.width - pad);
   if (top  + rect.height + pad > vh) top  = Math.max(pad, vh - rect.height - pad);
+  if (left < pad) left = pad;
+  if (top  < pad) top  = pad;
 
   contextMenu.style.left = left + 'px';
   contextMenu.style.top  = top  + 'px';
 
-  // Focus first item for keyboard nav
   const first = contextMenu.querySelector('.context-menu__item');
   if (first) first.focus({ preventScroll: true });
 
-  // Dismiss listeners
   const onDocPointer = (e) => {
     if (!contextMenu.contains(e.target)) hideContextMenu();
   };
   const onDocKey = (e) => {
-    if (e.key === 'Escape') {
-      e.preventDefault();
-      e.stopPropagation();
-      hideContextMenu({ focusBack: true });
-      return;
-    }
+    if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); hideContextMenu({ focusBack: true }); return; }
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
       e.preventDefault();
       const list = [...contextMenu.querySelectorAll('.context-menu__item')];
@@ -1914,20 +2343,14 @@ function showContextMenu(x, y, items) {
       list[next].focus();
       return;
     }
-    if (e.key === 'Home') {
-      e.preventDefault();
-      contextMenu.querySelector('.context-menu__item')?.focus();
-      return;
-    }
+    if (e.key === 'Home') { e.preventDefault(); contextMenu.querySelector('.context-menu__item')?.focus(); return; }
     if (e.key === 'End') {
       e.preventDefault();
       const list = contextMenu.querySelectorAll('.context-menu__item');
       list[list.length - 1]?.focus();
       return;
     }
-    if (e.key === 'Tab') {
-      hideContextMenu();
-    }
+    if (e.key === 'Tab') hideContextMenu();
   };
   const onScroll = () => hideContextMenu();
   const onResize = () => hideContextMenu();
@@ -1959,7 +2382,6 @@ function hideContextMenu({ focusBack = false, silent = false } = {}) {
   lastContextFocus = null;
 
   if (!silent) {
-    // Clear items after transition to avoid stale nodes
     setTimeout(() => {
       if (!contextMenu.classList.contains('is-open')) contextMenu.innerHTML = '';
     }, 150);
@@ -1969,34 +2391,48 @@ function hideContextMenu({ focusBack = false, silent = false } = {}) {
 /* ============================================================
    11. DOM refs
    ============================================================ */
-const listEl      = $('noteList');
-const searchInput = $('searchInput');
-const searchClear = $('searchClear');
-const sortSelect  = $('sortSelect');
-const noteCountEl = $('noteCount');
-const emptyState  = $('emptyState');
-const emptyTitle  = $('emptyTitle');
-const emptyText   = $('emptyText');
-const editorPane  = $('editorPane');
-const titleInput  = $('titleInput');
-const bodyInput   = $('bodyInput');
-const previewPane = $('previewPane');
-const previewBtn  = $('previewBtn');
-const pinBtn      = $('pinBtn');
-const statusDot   = $('statusDot');
-const statusText  = $('statusText');
-const wordCountEl = $('wordCount');
-const importInput = $('importInput');
+const app          = $('app');
+const listEl       = $('noteList');
+const searchInput  = $('searchInput');
+const searchClear  = $('searchClear');
+const sortSelect   = $('sortSelect');
+const noteCountEl  = $('noteCount');
+const sidebarTitle = $('sidebarTitle');
+const trashBanner  = $('trashBanner');
+const emptyTrashBtn = $('emptyTrashBtn');
+const emptyState   = $('emptyState');
+const emptyTitle   = $('emptyTitle');
+const emptyText    = $('emptyText');
+const editorPane   = $('editorPane');
+const titleInput   = $('titleInput');
+const bodyInput    = $('bodyInput');
+const previewPane  = $('previewPane');
+const previewBtn   = $('previewBtn');
+const focusBtn     = $('focusBtn');
+const pinBtn       = $('pinBtn');
+const statusDot    = $('statusDot');
+const statusText   = $('statusText');
+const wordCountEl  = $('wordCount');
+const charCountEl  = $('charCount');
+const readTimeEl   = $('readTime');
+const importInput  = $('importInput');
+const toolbar      = $('toolbar');
 
 /* ============================================================
    12. Sorting & filtering
    ============================================================ */
+function colorIndex(note) {
+  const i = COLORS.findIndex((c) => c.hex === note.color);
+  return i === -1 ? 0 : i;
+}
+
 function sortedNotes() {
   const arr = [...notes];
   arr.sort((a, b) => {
     if (!!b.pinned !== !!a.pinned) return b.pinned ? 1 : -1;
     if (sortMode === 'title')   return titleOf(a).localeCompare(titleOf(b), undefined, { sensitivity: 'base' });
     if (sortMode === 'created') return b.createdAt - a.createdAt;
+    if (sortMode === 'color')   return colorIndex(a) - colorIndex(b) || b.updatedAt - a.updatedAt;
     return b.updatedAt - a.updatedAt;
   });
   return arr;
@@ -2004,9 +2440,11 @@ function sortedNotes() {
 
 function filteredNotes() {
   const q = query.trim().toLowerCase();
-  const sorted = sortedNotes();
-  if (!q) return sorted;
-  return sorted.filter((n) =>
+  const base = sortedNotes().filter((n) =>
+    sidebarView === 'trash' ? isTrashed(n) : !isTrashed(n)
+  );
+  if (!q) return base;
+  return base.filter((n) =>
     (n.title || '').toLowerCase().includes(q) ||
     (n.body  || '').toLowerCase().includes(q)
   );
@@ -2016,9 +2454,7 @@ function filteredNotes() {
    13. Markdown renderer
    ============================================================ */
 function renderMarkdown(src) {
-  if (!src || !src.trim()) {
-    return '<p class="md-empty">Nothing to preview yet.</p>';
-  }
+  if (!src || !src.trim()) return '<p class="md-empty">Nothing to preview yet.</p>';
 
   const codeBlocks = [];
   let text = src.replace(/```([\s\S]*?)```/g, (_, code) => {
@@ -2027,7 +2463,6 @@ function renderMarkdown(src) {
   });
 
   text = escapeHtml(text);
-
   const lines = text.split('\n');
   const out = [];
   let listType = null;
@@ -2043,13 +2478,9 @@ function renderMarkdown(src) {
       out.push('<pre><code>' + escapeHtml(codeBlocks[+codeMatch[1]]) + '</code></pre>');
       continue;
     }
-
     if (/^\s*([-*_])(?:\s*\1){2,}\s*$/.test(line)) {
-      closeList(); closeQuote();
-      out.push('<hr>');
-      continue;
+      closeList(); closeQuote(); out.push('<hr>'); continue;
     }
-
     const h = line.match(/^(#{1,6})\s+(.*)$/);
     if (h) {
       closeList(); closeQuote();
@@ -2057,16 +2488,13 @@ function renderMarkdown(src) {
       out.push('<h' + level + '>' + inline(h[2]) + '</h' + level + '>');
       continue;
     }
-
     const q = line.match(/^&gt;\s?(.*)$/);
     if (q) {
       closeList();
       if (!inQuote) { out.push('<blockquote>'); inQuote = true; }
       out.push('<p>' + inline(q[1]) + '</p>');
       continue;
-    } else {
-      closeQuote();
-    }
+    } else closeQuote();
 
     const task = line.match(/^\s*[-*]\s+\[([ xX])\]\s+(.*)$/);
     if (task) {
@@ -2093,10 +2521,7 @@ function renderMarkdown(src) {
       continue;
     }
 
-    if (!line.trim()) {
-      closeList(); closeQuote();
-      continue;
-    }
+    if (!line.trim()) { closeList(); closeQuote(); continue; }
 
     closeList(); closeQuote();
     out.push('<p>' + inline(line) + '</p>');
@@ -2127,7 +2552,11 @@ const PIN_SVG = '<svg class="note-item__pin" viewBox="0 0 24 24" fill="none" str
   '</svg>';
 
 function updateNoteCount() {
-  noteCountEl.textContent = String(notes.length);
+  const n = sidebarView === 'trash'
+    ? notes.filter(isTrashed).length
+    : notes.filter((x) => !isTrashed(x)).length;
+  noteCountEl.textContent = String(n);
+  noteCountEl.classList.toggle('badge--danger', sidebarView === 'trash');
 }
 
 function renderList() {
@@ -2137,12 +2566,15 @@ function renderList() {
   listEl.innerHTML = '';
   updateNoteCount();
 
+  sidebarTitle.textContent = sidebarView === 'trash' ? 'Trash' : 'Notes';
+  trashBanner.classList.toggle('hidden', sidebarView !== 'trash');
+
   if (!visible.length) {
     const li = document.createElement('li');
     li.className = 'list-empty';
-    li.textContent = q
-      ? 'No notes match your search.'
-      : 'No notes yet. Use “New note” to add one.';
+    li.textContent = sidebarView === 'trash'
+      ? (q ? 'No deleted notes match.' : 'Trash is empty.')
+      : (q ? 'No notes match your search.' : 'No notes yet. Use “New note” to add one.');
     listEl.appendChild(li);
     return;
   }
@@ -2157,9 +2589,11 @@ function renderList() {
     btn.type = 'button';
     btn.className = 'note-item'
       + (note.id === activeId ? ' is-active' : '')
-      + (note.pinned ? ' is-pinned' : '');
+      + (note.pinned ? ' is-pinned' : '')
+      + (note.color ? ' has-color' : '');
     btn.dataset.id = note.id;
     btn.setAttribute('aria-current', note.id === activeId ? 'true' : 'false');
+    if (note.color) btn.style.setProperty('--note-color', note.color);
 
     btn.innerHTML =
       '<div class="note-item__top">' +
@@ -2167,7 +2601,10 @@ function renderList() {
         PIN_SVG +
       '</div>' +
       '<div class="note-item__preview">' + highlightMatch(previewOf(note), q) + '</div>' +
-      '<div class="note-item__time">' + escapeHtml(formatTime(note.updatedAt)) + '</div>';
+      '<div class="note-item__time">' +
+        escapeHtml(formatTime(note.updatedAt)) +
+        (isTrashed(note) ? ' · deleted ' + escapeHtml(formatTime(note.deletedAt)) : '') +
+      '</div>';
 
     btn.addEventListener('click', () => {
       if (activeId === note.id) return;
@@ -2184,8 +2621,10 @@ function renderList() {
 function updateListRow(note) {
   const btn = listEl.querySelector('.note-item[data-id="' + note.id + '"]');
   if (!btn) return;
-
   btn.classList.toggle('is-pinned', !!note.pinned);
+  btn.classList.toggle('has-color', !!note.color);
+  if (note.color) btn.style.setProperty('--note-color', note.color);
+  else btn.style.removeProperty('--note-color');
   btn.querySelector('.note-item__title').textContent   = titleOf(note);
   btn.querySelector('.note-item__preview').textContent = previewOf(note);
   btn.querySelector('.note-item__time').textContent    = formatTime(note.updatedAt);
@@ -2197,13 +2636,20 @@ function updateListRow(note) {
 function renderEditor() {
   const note = getActiveNote();
 
-  if (!note) {
+  if (!note || isTrashed(note)) {
     editorPane.classList.add('hidden');
     emptyState.classList.remove('hidden');
-    emptyTitle.textContent = notes.length ? 'No note selected' : 'No notes yet';
-    emptyText.innerHTML = notes.length
-      ? 'Pick a note from the list, or create a new one with <kbd>⌘N</kbd>.'
-      : 'Create your first note to get started. Everything is saved in your browser.';
+
+    if (sidebarView === 'trash' && notes.some(isTrashed)) {
+      emptyTitle.textContent = 'Deleted notes';
+      emptyText.innerHTML = 'Restore a note from the trash to edit it, or empty the trash to delete permanently.';
+    } else if (notes.some((n) => !isTrashed(n))) {
+      emptyTitle.textContent = 'No note selected';
+      emptyText.innerHTML = 'Pick a note from the list, or create a new one with <kbd>⌘N</kbd>.';
+    } else {
+      emptyTitle.textContent = 'No notes yet';
+      emptyText.innerHTML = 'Create your first note to get started. Everything is saved in your browser.';
+    }
     return;
   }
 
@@ -2218,14 +2664,20 @@ function renderEditor() {
   pinBtn.setAttribute('aria-label', note.pinned ? 'Unpin note' : 'Pin note');
   pinBtn.title = note.pinned ? 'Unpin note' : 'Pin note';
 
-  updateWordCount();
+  updateStats();
   refreshPreview();
   setStatus('saved');
 }
 
-function updateWordCount() {
-  const n = countWords(bodyInput.value);
-  wordCountEl.textContent = n === 1 ? '1 word' : n + ' words';
+function updateStats() {
+  const text = bodyInput.value;
+  const words = countWords(text);
+  const chars = text.length;
+  const minutes = Math.max(1, Math.round(words / 200));
+
+  wordCountEl.textContent = words === 1 ? '1 word' : words + ' words';
+  charCountEl.textContent = chars === 1 ? '1 char' : chars + ' chars';
+  readTimeEl.textContent  = words === 0 ? '0 min read' : minutes + ' min read';
 }
 
 function setStatus(kind, message) {
@@ -2242,7 +2694,7 @@ function setStatus(kind, message) {
 }
 
 /* ============================================================
-   16. Preview mode
+   16. Preview mode + focus mode
    ============================================================ */
 function refreshPreview() {
   if (!previewMode) return;
@@ -2256,17 +2708,30 @@ function applyPreviewMode() {
 
   bodyInput.classList.toggle('hidden', previewMode);
   previewPane.classList.toggle('hidden', !previewMode);
+  toolbar.classList.toggle('hidden', previewMode);
 
   refreshPreview();
 }
 
 function togglePreview() {
-  if (!getActiveNote()) return;
+  if (!getActiveNote() || isTrashed(getActiveNote())) return;
   previewMode = !previewMode;
   applyPreviewMode();
 }
 
 previewBtn.addEventListener('click', togglePreview);
+
+function applyFocusMode() {
+  app.classList.toggle('is-focus', focusMode);
+  focusBtn.classList.toggle('is-on', focusMode);
+  focusBtn.setAttribute('aria-pressed', String(focusMode));
+  try { localStorage.setItem(FOCUS_KEY, focusMode ? '1' : '0'); } catch {}
+}
+
+focusBtn.addEventListener('click', () => {
+  focusMode = !focusMode;
+  applyFocusMode();
+});
 
 /* ============================================================
    17. Note actions
@@ -2274,11 +2739,18 @@ previewBtn.addEventListener('click', togglePreview);
 function selectNote(id) {
   if (activeId === id) return;
   activeId = id;
+  previewMode = false;      // reset preview when switching notes
+  applyPreviewMode();
   renderList();
   renderEditor();
 }
 
 function createNote(templateKey = 'blank') {
+  if (sidebarView === 'trash') {
+    sidebarView = 'notes';
+    try { localStorage.setItem(VIEW_KEY, sidebarView); } catch {}
+  }
+
   const tpl = TEMPLATES[templateKey] || TEMPLATES.blank;
   const now = Date.now();
 
@@ -2287,6 +2759,8 @@ function createNote(templateKey = 'blank') {
     title: tpl.title,
     body: tpl.body,
     pinned: false,
+    color: '',
+    deletedAt: 0,
     createdAt: now,
     updatedAt: now
   };
@@ -2311,15 +2785,25 @@ function createNote(templateKey = 'blank') {
 
 function togglePinNote(id) {
   const note = notes.find((n) => n.id === id);
-  if (!note) return;
-
+  if (!note || isTrashed(note)) return;
   note.pinned = !note.pinned;
   note.updatedAt = Date.now();
-
   persist();
   renderList();
   if (activeId === id) renderEditor();
   toast(note.pinned ? 'Note pinned' : 'Note unpinned');
+}
+
+function setNoteColor(id, hex) {
+  const note = notes.find((n) => n.id === id);
+  if (!note) return;
+  note.color = hex || '';
+  note.updatedAt = Date.now();
+  persist();
+  renderList();
+  if (activeId === id) renderEditor();
+  const name = COLORS.find((c) => c.hex === hex)?.name || 'Default';
+  toast('Color set to ' + name);
 }
 
 function duplicateNote(id) {
@@ -2332,6 +2816,8 @@ function duplicateNote(id) {
     title: note.title ? note.title + ' (copy)' : '',
     body: note.body,
     pinned: false,
+    color: note.color,
+    deletedAt: 0,
     createdAt: now,
     updatedAt: now
   };
@@ -2351,7 +2837,6 @@ async function copyNote(id) {
   if (!note) return;
 
   const text = titleOf(note) + '\n\n' + (note.body || '');
-
   try {
     if (navigator.clipboard && window.isSecureContext) {
       await navigator.clipboard.writeText(text);
@@ -2369,6 +2854,23 @@ async function copyNote(id) {
   } catch {
     toast('Could not copy');
   }
+}
+
+async function shareNote(id) {
+  const note = notes.find((n) => n.id === id);
+  if (!note) return;
+
+  const text = titleOf(note) + '\n\n' + (note.body || '');
+
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: titleOf(note), text });
+      return;
+    } catch (e) {
+      if (e.name === 'AbortError') return;
+    }
+  }
+  copyNote(id);
 }
 
 function downloadNote(note) {
@@ -2392,37 +2894,36 @@ function downloadNote(note) {
   toast('Note downloaded');
 }
 
-async function deleteNote(id) {
+function printNote() {
+  const note = getActiveNote();
+  if (!note || isTrashed(note)) return;
+  window.print();
+}
+
+/* ---------- Trash ---------- */
+function trashNote(id) {
   const note = notes.find((n) => n.id === id);
   if (!note) return;
 
-  const ok = await confirmDialog({
-    title: 'Delete note?',
-    message: '“' + titleOf(note) + '” will be permanently deleted.',
-    confirmLabel: 'Delete'
-  });
-  if (!ok) return;
+  note.deletedAt = Date.now();
+  note.pinned = false;
+  note.updatedAt = Date.now();
 
-  const index = notes.findIndex((n) => n.id === id);
-  const [removed] = notes.splice(index, 1);
-  lastDeleted = { note: removed, index };
-
-  const remaining = filteredNotes();
-  activeId = remaining.length ? remaining[0].id : null;
+  const remaining = notes.filter((n) => !isTrashed(n) && n.id !== id);
+  const sorted = [...remaining].sort((a, b) => b.updatedAt - a.updatedAt);
+  activeId = sorted.length ? sorted[0].id : null;
 
   persist();
   renderList();
   renderEditor();
 
-  toast('Note deleted', {
+  toast('Note moved to trash', {
     action: {
       label: 'Undo',
       onClick: () => {
-        if (!lastDeleted) return;
-        const { note: n, index: idx } = lastDeleted;
-        notes.splice(Math.min(idx, notes.length), 0, n);
-        activeId = n.id;
-        lastDeleted = null;
+        note.deletedAt = 0;
+        note.updatedAt = Date.now();
+        activeId = note.id;
         persist();
         renderList();
         renderEditor();
@@ -2431,6 +2932,59 @@ async function deleteNote(id) {
     },
     duration: 6000
   });
+}
+
+function restoreNote(id) {
+  const note = notes.find((n) => n.id === id);
+  if (!note) return;
+  note.deletedAt = 0;
+  note.updatedAt = Date.now();
+  persist();
+  renderList();
+  renderEditor();
+  toast('Note restored');
+}
+
+async function purgeNote(id) {
+  const note = notes.find((n) => n.id === id);
+  if (!note) return;
+  const ok = await confirmDialog({
+    title: 'Delete permanently?',
+    message: '“' + titleOf(note) + '” will be gone forever.',
+    confirmLabel: 'Delete forever'
+  });
+  if (!ok) return;
+
+  notes = notes.filter((n) => n.id !== id);
+  if (activeId === id) activeId = null;
+  persist();
+  renderList();
+  renderEditor();
+  toast('Note permanently deleted');
+}
+
+async function emptyTrash() {
+  const trashed = notes.filter(isTrashed);
+  if (!trashed.length) { toast('Trash is already empty'); return; }
+  const ok = await confirmDialog({
+    title: 'Empty trash?',
+    message: trashed.length + (trashed.length === 1 ? ' note will be' : ' notes will be') + ' permanently deleted.',
+    confirmLabel: 'Empty trash'
+  });
+  if (!ok) return;
+
+  notes = notes.filter((n) => !isTrashed(n));
+  persist();
+  renderList();
+  renderEditor();
+  toast('Trash emptied');
+}
+
+async function deleteNote(id) {
+  const note = notes.find((n) => n.id === id);
+  if (!note) return;
+  if (isTrashed(note)) return purgeNote(id);
+  return trashNote(id);
 }
 
 /* ============================================================
@@ -2449,7 +3003,8 @@ function scheduleSave({ resort = false } = {}) {
     clearTimeout(listResortTimer);
     listResortTimer = setTimeout(() => {
       if (sortMode === 'title') return;
-      if (document.activeElement && (document.activeElement === titleInput || document.activeElement === bodyInput)) return;
+      const ae = document.activeElement;
+      if (ae === titleInput || ae === bodyInput) return;
       renderList();
     }, 1400);
   }
@@ -2457,19 +3012,16 @@ function scheduleSave({ resort = false } = {}) {
 
 function handleEdit(field, value) {
   const note = getActiveNote();
-  if (!note) return;
+  if (!note || isTrashed(note)) return;
 
   note[field] = value;
   note.updatedAt = Date.now();
 
-  if (query.trim()) {
-    renderList();
-  } else {
-    updateListRow(note);
-  }
+  if (query.trim()) renderList();
+  else updateListRow(note);
 
   if (field === 'body') {
-    updateWordCount();
+    updateStats();
     if (previewMode) refreshPreview();
   }
 
@@ -2487,11 +3039,238 @@ function flushSave() {
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'hidden') flushSave();
 });
-
 window.addEventListener('beforeunload', flushSave);
 
 /* ============================================================
-   19. Split button (New note)
+   19. Markdown toolbar & formatting
+   ============================================================ */
+function replaceSelection(ta, text, selectStart, selectEnd) {
+  const start = ta.selectionStart;
+  const end   = ta.selectionEnd;
+  const before = ta.value.slice(0, start);
+  const after  = ta.value.slice(end);
+  ta.value = before + text + after;
+
+  if (typeof selectStart === 'number') {
+    ta.selectionStart = start + selectStart;
+    ta.selectionEnd   = start + (typeof selectEnd === 'number' ? selectEnd : selectStart);
+  } else {
+    ta.selectionStart = ta.selectionEnd = start + text.length;
+  }
+
+  ta.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
+function wrapSelection(ta, before, after = before, placeholder = '') {
+  const start = ta.selectionStart;
+  const end   = ta.selectionEnd;
+  const selected = ta.value.slice(start, end);
+  const content = selected || placeholder;
+
+  const text = before + content + after;
+  const result = replaceSelectionWithCursor(ta, text, before.length, before.length + content.length);
+
+  if (!selected && placeholder) {
+    // Select placeholder so the user can overwrite it
+    ta.setSelectionRange(start + before.length, start + before.length + placeholder.length);
+  } else {
+    ta.setSelectionRange(start + before.length, start + before.length + content.length);
+  }
+}
+
+function replaceSelectionWithCursor(ta, text) {
+  const start = ta.selectionStart;
+  const end   = ta.selectionEnd;
+  const before = ta.value.slice(0, start);
+  const after  = ta.value.slice(end);
+  ta.value = before + text + after;
+  ta.dispatchEvent(new Event('input', { bubbles: true }));
+  return { start, text };
+}
+
+/** Get the full line (start index and text) at the caret. */
+function getCurrentLine(ta) {
+  const pos = ta.selectionStart;
+  const value = ta.value;
+  const lineStart = value.lastIndexOf('\n', pos - 1) + 1;
+  let lineEnd = value.indexOf('\n', pos);
+  if (lineEnd === -1) lineEnd = value.length;
+  return { lineStart, lineEnd, text: value.slice(lineStart, lineEnd) };
+}
+
+/** Apply a prefix to the current line (or toggle if already present). */
+function toggleLinePrefix(ta, prefix, altPrefixes = []) {
+  const { lineStart, lineEnd, text } = getCurrentLine(ta);
+  const allPrefixes = [prefix, ...altPrefixes];
+
+  const matched = allPrefixes.find((p) => text.startsWith(p));
+  const newText = matched
+    ? text.slice(matched.length)
+    : prefix + text;
+
+  const value = ta.value;
+  ta.value = value.slice(0, lineStart) + newText + value.slice(lineEnd);
+
+  const delta = newText.length - text.length;
+  ta.selectionStart = Math.max(lineStart, ta.selectionStart + delta);
+  ta.selectionEnd   = Math.max(lineStart, ta.selectionEnd + delta);
+
+  ta.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
+function insertAtCursor(ta, text) {
+  const start = ta.selectionStart;
+  const end   = ta.selectionEnd;
+  const value = ta.value;
+  ta.value = value.slice(0, start) + text + value.slice(end);
+  ta.selectionStart = ta.selectionEnd = start + text.length;
+  ta.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
+function applyFormat(cmd) {
+  const ta = bodyInput;
+  if (previewMode) return;
+  ta.focus();
+
+  switch (cmd) {
+    case 'bold':   wrapSelection(ta, '**', '**', 'bold text'); break;
+    case 'italic': wrapSelection(ta, '*', '*', 'italic text'); break;
+    case 'strike': wrapSelection(ta, '~~', '~~', 'strikethrough'); break;
+    case 'code':   wrapSelection(ta, '`', '`', 'code'); break;
+    case 'link':   wrapSelection(ta, '[', '](url)', 'link text'); break;
+    case 'h1':     toggleLinePrefix(ta, '# ', ['## ', '### ']); break;
+    case 'h2':     toggleLinePrefix(ta, '## ', ['# ', '### ']); break;
+    case 'quote':  toggleLinePrefix(ta, '> '); break;
+    case 'ul':     toggleLinePrefix(ta, '- '); break;
+    case 'ol':     toggleLinePrefix(ta, '1. '); break;
+    case 'task':   toggleLinePrefix(ta, '- [ ] '); break;
+    case 'hr': {
+      const { lineEnd } = getCurrentLine(ta);
+      const needsNewline = ta.value[lineEnd] !== '\n' && lineEnd < ta.value.length;
+      insertAtCursor(ta, (needsNewline ? '\n' : '') + '\n---\n');
+      break;
+    }
+    case 'codeblock': {
+      const start = ta.selectionStart;
+      const end   = ta.selectionEnd;
+      const sel = ta.value.slice(start, end);
+      const before = ta.value.slice(0, start);
+      const after  = ta.value.slice(end);
+      const padBefore = before.endsWith('\n') || before === '' ? '' : '\n';
+      const padAfter  = after.startsWith('\n') || after === '' ? '' : '\n';
+      const block = padBefore + '```\n' + (sel || 'code') + '\n```' + padAfter;
+      ta.value = before + block + after;
+      ta.selectionStart = start + padBefore.length + 4;
+      ta.selectionEnd   = ta.selectionStart + (sel || 'code').length;
+      ta.dispatchEvent(new Event('input', { bubbles: true }));
+      break;
+    }
+  }
+}
+
+toolbar.addEventListener('click', (e) => {
+  const btn = e.target.closest('.toolbar__btn');
+  if (!btn) return;
+  applyFormat(btn.dataset.cmd);
+});
+
+/* ============================================================
+   20. Auto-list continuation + Tab indent
+   ============================================================ */
+bodyInput.addEventListener('keydown', (e) => {
+  // Enter — continue lists
+  if (e.key === 'Enter' && !e.shiftKey && !e.metaKey && !e.ctrlKey) {
+    const { lineStart, lineEnd, text } = getCurrentLine(bodyInput);
+
+    // Only when caret is at end of the current line
+    if (bodyInput.selectionStart !== lineEnd) return;
+
+    // Task list
+    const taskMatch = text.match(/^(\s*)([-*])\s+\[([ xX])\]\s+(.*)$/);
+    if (taskMatch) {
+      e.preventDefault();
+      const [, indent, bullet, , content] = taskMatch;
+      if (!content.trim()) {
+        // Empty task — remove the marker
+        bodyInput.value = bodyInput.value.slice(0, lineStart) + indent + bodyInput.value.slice(lineEnd);
+        bodyInput.selectionStart = bodyInput.selectionEnd = lineStart + indent.length;
+      } else {
+        insertAtCursor(bodyInput, '\n' + indent + bullet + ' [ ] ');
+      }
+      return;
+    }
+
+    // Bullet list
+    const ulMatch = text.match(/^(\s*)([-*+])\s+(.*)$/);
+    if (ulMatch) {
+      e.preventDefault();
+      const [, indent, bullet, content] = ulMatch;
+      if (!content.trim()) {
+        bodyInput.value = bodyInput.value.slice(0, lineStart) + indent + bodyInput.value.slice(lineEnd);
+        bodyInput.selectionStart = bodyInput.selectionEnd = lineStart + indent.length;
+      } else {
+        insertAtCursor(bodyInput, '\n' + indent + bullet + ' ');
+      }
+      return;
+    }
+
+    // Numbered list
+    const olMatch = text.match(/^(\s*)(\d+)\.\s+(.*)$/);
+    if (olMatch) {
+      e.preventDefault();
+      const [, indent, num, content] = olMatch;
+      if (!content.trim()) {
+        bodyInput.value = bodyInput.value.slice(0, lineStart) + indent + bodyInput.value.slice(lineEnd);
+        bodyInput.selectionStart = bodyInput.selectionEnd = lineStart + indent.length;
+      } else {
+        insertAtCursor(bodyInput, '\n' + indent + (parseInt(num, 10) + 1) + '. ');
+      }
+      return;
+    }
+
+    // Blockquote
+    const bqMatch = text.match(/^(\s*)>\s?(.*)$/);
+    if (bqMatch) {
+      e.preventDefault();
+      const [, indent, content] = bqMatch;
+      if (!content.trim()) {
+        bodyInput.value = bodyInput.value.slice(0, lineStart) + indent + bodyInput.value.slice(lineEnd);
+        bodyInput.selectionStart = bodyInput.selectionEnd = lineStart + indent.length;
+      } else {
+        insertAtCursor(bodyInput, '\n' + indent + '> ');
+      }
+      return;
+    }
+    return;
+  }
+
+  // Tab / Shift+Tab — indent the current line
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    const { lineStart, lineEnd, text } = getCurrentLine(bodyInput);
+    const value = bodyInput.value;
+
+    if (e.shiftKey) {
+      // Remove up to 2 leading spaces
+      const toRemove = text.match(/^(\s{1,2})/);
+      if (toRemove) {
+        const n = toRemove[1].length;
+        bodyInput.value = value.slice(0, lineStart) + text.slice(n) + value.slice(lineEnd);
+        bodyInput.selectionStart = Math.max(lineStart, bodyInput.selectionStart - n);
+        bodyInput.selectionEnd   = Math.max(lineStart, bodyInput.selectionEnd - n);
+        bodyInput.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    } else {
+      bodyInput.value = value.slice(0, lineStart) + '  ' + value.slice(lineStart);
+      bodyInput.selectionStart += 2;
+      bodyInput.selectionEnd   += 2;
+      bodyInput.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+  }
+});
+
+/* ============================================================
+   21. Split button (New note)
    ============================================================ */
 const newNoteSplit  = $('newNoteSplit');
 const newNoteBtn    = $('newNoteBtn');
@@ -2500,19 +3279,20 @@ const newNoteToggle = $('newNoteToggle');
 wireMenu(newNoteSplit, newNoteToggle, {
   onSelect: (item) => createNote(item.dataset.template || 'blank')
 });
-
 newNoteBtn.addEventListener('click', () => createNote('blank'));
 
 /* ============================================================
-   20. Editor "more" menu + pin button
+   22. Editor "more" menu + pin button
    ============================================================ */
 wireMenu($('moreWrap'), $('moreBtn'), {
   onSelect: (item) => {
     switch (item.id) {
-      case 'dupBtn':       duplicateNote(activeId);          break;
-      case 'copyBtn':      copyNote(activeId);               break;
-      case 'exportOneBtn': downloadNote(getActiveNote());    break;
-      case 'deleteBtn':    deleteNote(activeId);             break;
+      case 'dupBtn':       duplicateNote(activeId);       break;
+      case 'copyBtn':      copyNote(activeId);            break;
+      case 'shareBtn':     shareNote(activeId);           break;
+      case 'exportOneBtn': downloadNote(getActiveNote()); break;
+      case 'printBtn':     printNote();                   break;
+      case 'deleteBtn':    deleteNote(activeId);          break;
     }
   }
 });
@@ -2520,22 +3300,24 @@ wireMenu($('moreWrap'), $('moreBtn'), {
 pinBtn.addEventListener('click', () => togglePinNote(activeId));
 
 /* ============================================================
-   21. App menu (export / import / clear)
+   23. App menu
    ============================================================ */
 wireMenu($('appMenuWrap'), $('appMenuBtn'), {
   onSelect: (item) => {
     switch (item.id) {
-      case 'exportAllBtn': exportAllNotes();     break;
-      case 'importBtn':    importInput.click();  break;
-      case 'clearAllBtn':  clearAllNotes();      break;
+      case 'quickSwitcherBtn': openQuickSwitcher(); break;
+      case 'exportAllBtn':     exportAllNotes();    break;
+      case 'importBtn':        importInput.click(); break;
+      case 'clearAllBtn':      clearAllNotes();     break;
     }
   }
 });
 
 function exportAllNotes() {
-  if (!notes.length) { toast('No notes to export'); return; }
+  const active = notes.filter((n) => !isTrashed(n));
+  if (!active.length) { toast('No notes to export'); return; }
 
-  const payload = { version: 3, exportedAt: new Date().toISOString(), notes };
+  const payload = { version: 4, exportedAt: new Date().toISOString(), notes: active };
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
@@ -2545,8 +3327,7 @@ function exportAllNotes() {
   a.click();
   a.remove();
   URL.revokeObjectURL(url);
-
-  toast('Exported ' + notes.length + (notes.length === 1 ? ' note' : ' notes'));
+  toast('Exported ' + active.length + (active.length === 1 ? ' note' : ' notes'));
 }
 
 importInput.addEventListener('change', async () => {
@@ -2555,7 +3336,7 @@ importInput.addEventListener('change', async () => {
   if (!file) return;
 
   try {
-    const text   = await file.text();
+    const text = await file.text();
     const parsed = JSON.parse(text);
     const incoming = Array.isArray(parsed)
       ? parsed
@@ -2577,6 +3358,8 @@ importInput.addEventListener('change', async () => {
         title:     typeof raw.title === 'string' ? raw.title : '',
         body:      typeof raw.body  === 'string' ? raw.body  : '',
         pinned:    !!raw.pinned,
+        color:     typeof raw.color === 'string' ? raw.color : '',
+        deletedAt: 0,
         createdAt: Number(raw.createdAt) || now,
         updatedAt: Number(raw.updatedAt) || now
       });
@@ -2584,8 +3367,10 @@ importInput.addEventListener('change', async () => {
     });
 
     if (!added) { toast('No valid notes found'); return; }
-
-    if (!activeId) activeId = sortedNotes()[0].id;
+    if (!activeId) {
+      const sorted = sortedNotes().filter((n) => !isTrashed(n));
+      activeId = sorted.length ? sorted[0].id : null;
+    }
 
     persist();
     renderList();
@@ -2597,27 +3382,48 @@ importInput.addEventListener('change', async () => {
 });
 
 async function clearAllNotes() {
-  if (!notes.length) { toast('No notes to delete'); return; }
+  const active = notes.filter((n) => !isTrashed(n));
+  if (!active.length) { toast('No notes to delete'); return; }
 
   const ok = await confirmDialog({
-    title: 'Delete all notes?',
-    message: 'All ' + notes.length + ' notes will be permanently removed.',
-    confirmLabel: 'Delete all'
+    title: 'Move all notes to trash?',
+    message: 'All ' + active.length + ' notes will be moved to trash. You can restore them for 30 days.',
+    confirmLabel: 'Move to trash'
   });
   if (!ok) return;
 
-  notes = [];
+  const now = Date.now();
+  active.forEach((n) => { n.deletedAt = now; n.pinned = false; });
   activeId = null;
-  lastDeleted = null;
 
   persist();
   renderList();
   renderEditor();
-  toast('All notes deleted');
+  toast('All notes moved to trash');
 }
 
 /* ============================================================
-   22. Search
+   24. Trash toggle
+   ============================================================ */
+$('trashBtn').addEventListener('click', () => {
+  sidebarView = sidebarView === 'trash' ? 'notes' : 'trash';
+  try { localStorage.setItem(VIEW_KEY, sidebarView); } catch {}
+
+  // Clear active selection if it's not visible in the new view
+  const note = getActiveNote();
+  if (note && ((sidebarView === 'trash') !== isTrashed(note))) {
+    activeId = null;
+    previewMode = false;
+    applyPreviewMode();
+  }
+  renderList();
+  renderEditor();
+});
+
+emptyTrashBtn.addEventListener('click', emptyTrash);
+
+/* ============================================================
+   25. Search
    ============================================================ */
 searchInput.addEventListener('input', () => {
   query = searchInput.value;
@@ -2641,26 +3447,20 @@ searchInput.addEventListener('keydown', (e) => {
       query = '';
       searchClear.classList.add('hidden');
       renderList();
-    } else {
-      searchInput.blur();
-    }
+    } else searchInput.blur();
   } else if (e.key === 'Enter') {
     const first = listEl.querySelector('.note-item');
-    if (first) {
-      first.click();
-      first.focus();
-    }
+    if (first) { first.click(); first.focus(); }
   }
 });
 
 /* ============================================================
-   23. Sort
+   26. Sort
    ============================================================ */
 try {
   const stored = localStorage.getItem(SORT_KEY);
-  if (stored && ['updated', 'created', 'title'].includes(stored)) sortMode = stored;
+  if (stored && ['updated', 'created', 'title', 'color'].includes(stored)) sortMode = stored;
 } catch {}
-
 sortSelect.value = sortMode;
 
 sortSelect.addEventListener('change', () => {
@@ -2670,29 +3470,178 @@ sortSelect.addEventListener('change', () => {
 });
 
 /* ============================================================
-   24. List keyboard navigation
+   27. List keyboard navigation
    ============================================================ */
 listEl.addEventListener('keydown', (e) => {
   if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
-
   const items = [...listEl.querySelectorAll('.note-item')];
   const i = items.indexOf(document.activeElement);
   if (i === -1) return;
-
   e.preventDefault();
   const next = e.key === 'ArrowDown' ? items[i + 1] : items[i - 1];
-  if (next) {
-    next.focus();
-    next.click();
-  }
+  if (next) { next.focus(); next.click(); }
 });
 
 /* ============================================================
-   25. Context menu — right-click + long-press
+   28. Quick switcher
+   ============================================================ */
+const quickBackdrop = $('quickBackdrop');
+const quickInput    = $('quickInput');
+const quickList     = $('quickList');
+
+let quickResults = [];
+let quickIndex   = 0;
+let quickLastFocused = null;
+
+function fuzzyScore(query, text) {
+  if (!query) return 1;
+  const q = query.toLowerCase();
+  const t = text.toLowerCase();
+  if (t.includes(q)) return 2 + (q.length / Math.max(1, t.length));
+  // Subsequence match
+  let qi = 0;
+  for (let i = 0; i < t.length && qi < q.length; i++) {
+    if (t[i] === q[qi]) qi++;
+  }
+  return qi === q.length ? 1 : 0;
+}
+
+function openQuickSwitcher() {
+  quickLastFocused = document.activeElement;
+  quickInput.value = '';
+  quickBackdrop.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+  renderQuickResults('');
+  requestAnimationFrame(() => quickInput.focus());
+}
+
+function closeQuickSwitcher() {
+  quickBackdrop.classList.add('hidden');
+  document.body.style.overflow = '';
+  if (quickLastFocused && quickLastFocused.isConnected) quickLastFocused.focus({ preventScroll: true });
+  quickLastFocused = null;
+}
+
+function renderQuickResults(q) {
+  const candidates = notes.filter((n) => !isTrashed(n));
+  const scored = candidates
+    .map((n) => {
+      const titleScore = fuzzyScore(q, titleOf(n));
+      const bodyScore  = fuzzyScore(q, (n.body || '').slice(0, 200));
+      return { note: n, score: Math.max(titleScore * 2, bodyScore) };
+    })
+    .filter((x) => x.score > 0 || !q)
+    .sort((a, b) => b.score - a.score || b.note.updatedAt - a.note.updatedAt)
+    .slice(0, 30);
+
+  quickResults = scored.map((x) => x.note);
+  quickIndex = 0;
+  quickList.innerHTML = '';
+
+  if (!quickResults.length) {
+    const li = document.createElement('li');
+    li.className = 'list-empty';
+    li.textContent = q ? 'No matching notes.' : 'No notes yet.';
+    quickList.appendChild(li);
+    return;
+  }
+
+  quickResults.forEach((note, i) => {
+    const li = document.createElement('li');
+    li.setAttribute('role', 'option');
+    li.setAttribute('aria-selected', i === quickIndex ? 'true' : 'false');
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'quick-switcher__item' + (i === quickIndex ? ' is-focused' : '');
+    btn.dataset.id = note.id;
+
+    btn.innerHTML =
+      '<span class="quick-switcher__text">' +
+        '<span class="quick-switcher__title">' + escapeHtml(titleOf(note)) + '</span>' +
+        '<span class="quick-switcher__meta">' + escapeHtml(previewOf(note)) + ' · ' + escapeHtml(formatTime(note.updatedAt)) + '</span>' +
+      '</span>';
+
+    btn.addEventListener('click', () => {
+      const id = note.id;
+      closeQuickSwitcher();
+      setTimeout(() => openFromQuickSwitcher(id), 0);
+    });
+
+    li.appendChild(btn);
+    quickList.appendChild(li);
+  });
+}
+
+function openFromQuickSwitcher(id) {
+  if (sidebarView === 'trash') {
+    sidebarView = 'notes';
+    try { localStorage.setItem(VIEW_KEY, sidebarView); } catch {}
+  }
+  query = '';
+  searchInput.value = '';
+  searchClear.classList.add('hidden');
+
+  activeId = id;
+  previewMode = false;
+  applyPreviewMode();
+  renderList();
+  renderEditor();
+}
+
+function moveQuickIndex(delta) {
+  if (!quickResults.length) return;
+  quickIndex = (quickIndex + delta + quickResults.length) % quickResults.length;
+  const items = [...quickList.querySelectorAll('.quick-switcher__item')];
+  items.forEach((el, i) => {
+    el.classList.toggle('is-focused', i === quickIndex);
+    el.parentElement.setAttribute('aria-selected', i === quickIndex ? 'true' : 'false');
+  });
+  items[quickIndex]?.scrollIntoView({ block: 'nearest' });
+}
+
+quickInput.addEventListener('input', () => {
+  renderQuickResults(quickInput.value);
+});
+
+quickInput.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowDown') { e.preventDefault(); moveQuickIndex(1); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); moveQuickIndex(-1); }
+  else if (e.key === 'Enter') {
+    e.preventDefault();
+    const note = quickResults[quickIndex];
+    if (note) {
+      closeQuickSwitcher();
+      setTimeout(() => openFromQuickSwitcher(note.id), 0);
+    }
+  } else if (e.key === 'Escape') {
+    e.preventDefault();
+    e.stopPropagation();
+    closeQuickSwitcher();
+  }
+});
+
+quickBackdrop.addEventListener('mousedown', (e) => {
+  if (e.target === quickBackdrop) closeQuickSwitcher();
+});
+
+/* ============================================================
+   29. Context menus
    ============================================================ */
 function showNoteContextMenu(x, y, noteId) {
   const note = notes.find((n) => n.id === noteId);
   if (!note) return;
+
+  if (isTrashed(note)) {
+    showContextMenu(x, y, [
+      { label: 'Restore',          icon: ICON.restore,  action: () => restoreNote(noteId) },
+      { label: 'Copy to clipboard', icon: ICON.copy,     action: () => copyNote(noteId) },
+      { label: 'Download as .md',   icon: ICON.download, action: () => downloadNote(note) },
+      { type: 'separator' },
+      { label: 'Delete permanently', icon: ICON.del, danger: true, action: () => purgeNote(noteId) }
+    ]);
+    return;
+  }
 
   showContextMenu(x, y, [
     { label: 'Open',  icon: ICON.open, action: () => selectNote(noteId) },
@@ -2701,30 +3650,38 @@ function showNoteContextMenu(x, y, noteId) {
       icon: ICON.pin,
       action: () => togglePinNote(noteId)
     },
+    { type: 'colors', current: note.color, onPick: (hex) => setNoteColor(noteId, hex) },
     { type: 'separator' },
     { label: 'Duplicate',         icon: ICON.duplicate, shortcut: IS_MAC ? '⌘D' : 'Ctrl+D', action: () => duplicateNote(noteId) },
     { label: 'Copy to clipboard', icon: ICON.copy,      action: () => copyNote(noteId) },
     { label: 'Download as .md',   icon: ICON.download,  action: () => downloadNote(note) },
     { type: 'separator' },
-    { label: 'Delete', icon: ICON.del, danger: true, action: () => deleteNote(noteId) }
+    { label: 'Move to trash', icon: ICON.del, danger: true, action: () => trashNote(noteId) }
   ]);
 }
 
 function showListEmptyContextMenu(x, y) {
+  if (sidebarView === 'trash') {
+    showContextMenu(x, y, [
+      { label: 'Empty trash', icon: ICON.del, danger: true, action: emptyTrash }
+    ]);
+    return;
+  }
   showContextMenu(x, y, [
-    { label: 'New note',       icon: ICON.newNote, shortcut: IS_MAC ? '⌘N' : 'Ctrl+N', action: () => createNote('blank') },
-    { label: 'Meeting notes',  icon: ICON.meeting, action: () => createNote('meeting') },
-    { label: 'To-do list',     icon: ICON.todo,    action: () => createNote('todo') },
-    { label: 'Idea',           icon: ICON.idea,    action: () => createNote('idea') },
+    { label: 'New note',      icon: ICON.newNote, shortcut: IS_MAC ? '⌘N' : 'Ctrl+N', action: () => createNote('blank') },
+    { label: 'Meeting notes', icon: ICON.meeting, action: () => createNote('meeting') },
+    { label: 'To-do list',    icon: ICON.todo,    action: () => createNote('todo') },
+    { label: 'Idea',          icon: ICON.idea,    action: () => createNote('idea') },
     { type: 'separator' },
-    { label: 'Export all notes', icon: ICON.download, action: exportAllNotes },
-    { label: 'Import notes…',    icon: ICON.upload,   action: () => importInput.click() }
+    { label: 'Quick switcher',   icon: ICON.doc,       shortcut: IS_MAC ? '⌘P' : 'Ctrl+P', action: openQuickSwitcher },
+    { label: 'Export all notes', icon: ICON.download,  action: exportAllNotes },
+    { label: 'Import notes…',    icon: ICON.upload,    action: () => importInput.click() }
   ]);
 }
 
 function showEditorContextMenu(x, y) {
   const note = getActiveNote();
-  if (!note) return;
+  if (!note || isTrashed(note)) return;
 
   showContextMenu(x, y, [
     {
@@ -2736,45 +3693,37 @@ function showEditorContextMenu(x, y) {
     { type: 'separator' },
     { label: 'Duplicate',         icon: ICON.duplicate, shortcut: IS_MAC ? '⌘D' : 'Ctrl+D', action: () => duplicateNote(note.id) },
     { label: 'Copy to clipboard', icon: ICON.copy,      action: () => copyNote(note.id) },
+    { label: 'Share…',            icon: ICON.share,     action: () => shareNote(note.id) },
     { label: 'Download as .md',   icon: ICON.download,  action: () => downloadNote(note) },
+    { label: 'Print note',        icon: ICON.print,     shortcut: IS_MAC ? '⌘P' : 'Ctrl+P', action: printNote },
     { type: 'separator' },
-    { label: 'Delete note', icon: ICON.del, danger: true, action: () => deleteNote(note.id) }
+    { label: 'Move to trash', icon: ICON.del, danger: true, action: () => trashNote(note.id) }
   ]);
 }
 
 /* ---- Right-click handlers ---- */
-
 listEl.addEventListener('contextmenu', (e) => {
   const item = e.target.closest('.note-item');
   e.preventDefault();
-
-  // Browser's own contextmenu may fire after a touch long-press on some devices —
-  // don't double-open.
   if (contextMenu.classList.contains('is-open')) return;
-
-  if (item) {
-    showNoteContextMenu(e.clientX, e.clientY, item.dataset.id);
-  } else {
-    showListEmptyContextMenu(e.clientX, e.clientY);
-  }
+  if (item) showNoteContextMenu(e.clientX, e.clientY, item.dataset.id);
+  else showListEmptyContextMenu(e.clientX, e.clientY);
 });
 
-$('editorPane').addEventListener('contextmenu', (e) => {
-  // Let native menu show in inputs so cut/copy/paste still work
+editorPane.addEventListener('contextmenu', (e) => {
   if (e.target.closest('input, textarea')) return;
   e.preventDefault();
   if (contextMenu.classList.contains('is-open')) return;
   showEditorContextMenu(e.clientX, e.clientY);
 });
 
-// Prevent accidental native menu elsewhere in the app
+// Prevent the native menu elsewhere in the app, but allow in inputs / dialogs
 document.addEventListener('contextmenu', (e) => {
-  if (e.target.closest('.menu, .modal-backdrop, .toast-stack, input, textarea')) return;
-  if (e.target.closest('.sidebar__head, .editor')) e.preventDefault();
+  if (e.target.closest('.menu, .modal-backdrop, .toast-stack, input, textarea, .quick-backdrop, .context-menu')) return;
+  if (e.target.closest('.sidebar, .editor, .toolbar')) e.preventDefault();
 });
 
-/* ---- Long-press (touch) handler ---- */
-
+/* ---- Long-press (touch) ---- */
 let lpTimer = null;
 let lpStart = null;
 let lpFiredAt = 0;
@@ -2798,7 +3747,8 @@ document.addEventListener('pointermove', (e) => {
   if (!lpTimer || !lpStart) return;
   const dx = e.clientX - lpStart.x;
   const dy = e.clientY - lpStart.y;
-  if (Math.hypot(dx, dy) > 8) {
+  // Allow more slop to avoid canceling on a finger jitter
+  if (Math.hypot(dx, dy) > 12) {
     clearTimeout(lpTimer);
     lpTimer = null;
     lpStart = null;
@@ -2817,7 +3767,6 @@ document.addEventListener('pointercancel', () => {
   lpStart = null;
 }, { passive: true });
 
-// Suppress the click that follows a long-press
 document.addEventListener('click', (e) => {
   if (lpFiredAt && Date.now() - lpFiredAt < 600) {
     e.preventDefault();
@@ -2827,7 +3776,7 @@ document.addEventListener('click', (e) => {
 }, true);
 
 /* ============================================================
-   26. Global keyboard shortcuts
+   30. Global keyboard shortcuts
    ============================================================ */
 function isTypingTarget(el) {
   if (!el) return false;
@@ -2836,24 +3785,36 @@ function isTypingTarget(el) {
 }
 
 document.addEventListener('keydown', (e) => {
-  // Modal handles its own keys
   if (!modalBackdrop.classList.contains('hidden')) return;
-  // Context menu has its own key handling
+  if (!quickBackdrop.classList.contains('hidden')) return;
   if (contextMenu.classList.contains('is-open')) return;
-  // Don't re-handle something a nested handler already consumed
   if (e.defaultPrevented) return;
 
   const mod = e.metaKey || e.ctrlKey;
+  const key = e.key.toLowerCase();
+
+  // ⌘P — quick switcher
+  if (mod && key === 'p' && !e.shiftKey) {
+    e.preventDefault();
+    openQuickSwitcher();
+    return;
+  }
 
   // ⌘N — new blank note
-  if (mod && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'n') {
+  if (mod && !e.shiftKey && !e.altKey && key === 'n') {
     e.preventDefault();
     createNote('blank');
     return;
   }
 
-  // ⌘K — focus search
-  if (mod && e.key.toLowerCase() === 'k') {
+  // ⌘K — link formatting (when editing body)
+  if (mod && key === 'k') {
+    if (document.activeElement === bodyInput && !previewMode) {
+      e.preventDefault();
+      applyFormat('link');
+      return;
+    }
+    // Otherwise focus search
     e.preventDefault();
     searchInput.focus();
     searchInput.select();
@@ -2861,7 +3822,7 @@ document.addEventListener('keydown', (e) => {
   }
 
   // ⌘S — force save
-  if (mod && e.key.toLowerCase() === 's') {
+  if (mod && key === 's') {
     e.preventDefault();
     flushSave();
     setStatus('saved');
@@ -2869,25 +3830,43 @@ document.addEventListener('keydown', (e) => {
     return;
   }
 
-  // ⌘D — duplicate active note
-  if (mod && e.key.toLowerCase() === 'd') {
+  // ⌘D — duplicate
+  if (mod && key === 'd') {
     e.preventDefault();
     if (activeId) duplicateNote(activeId);
     return;
   }
 
   // ⌘E — toggle preview
-  if (mod && e.key.toLowerCase() === 'e') {
+  if (mod && key === 'e') {
     e.preventDefault();
     togglePreview();
     return;
   }
 
-  // Escape — close dropdowns / blur inputs
+  // ⌘. — focus mode
+  if (mod && key === '.') {
+    e.preventDefault();
+    focusMode = !focusMode;
+    applyFocusMode();
+    return;
+  }
+
+  // ⌘B / ⌘I / ⌘⇧X — inline formatting
+  if (mod && document.activeElement === bodyInput && !previewMode) {
+    if (key === 'b') { e.preventDefault(); applyFormat('bold');   return; }
+    if (key === 'i') { e.preventDefault(); applyFormat('italic'); return; }
+    if (e.shiftKey && key === 'x') { e.preventDefault(); applyFormat('strike'); return; }
+    if (e.shiftKey && key === 'c') { e.preventDefault(); applyFormat('code');   return; }
+  }
+
+  // Escape — close menus / blur inputs
   if (e.key === 'Escape') {
     const hadOpen = document.querySelector('.is-open');
     if (hadOpen) {
-      document.querySelectorAll('.is-open').forEach((el) => el.classList.remove('is-open'));
+      document.querySelectorAll('.is-open').forEach((el) => {
+        if (!el.classList.contains('context-menu')) el.classList.remove('is-open');
+      });
       document.querySelectorAll('[aria-expanded="true"]').forEach((el) => el.setAttribute('aria-expanded', 'false'));
     }
     if (isTypingTarget(document.activeElement) && document.activeElement !== searchInput) {
@@ -2897,7 +3876,7 @@ document.addEventListener('keydown', (e) => {
 });
 
 /* ============================================================
-   27. Live relative timestamps
+   31. Live relative timestamps
    ============================================================ */
 setInterval(() => {
   if (document.visibilityState !== 'visible') return;
@@ -2910,16 +3889,31 @@ setInterval(() => {
 }, 60_000);
 
 /* ============================================================
-   28. Boot
+   32. Boot
    ============================================================ */
 function init() {
   initTheme();
 
+  // Restore UI state
+  try {
+    const v = localStorage.getItem(VIEW_KEY);
+    if (v === 'trash' || v === 'notes') sidebarView = v;
+    if (localStorage.getItem(FOCUS_KEY) === '1') focusMode = true;
+  } catch {}
+
   notes = loadNotes();
-  const sorted = sortedNotes();
-  activeId = sorted.length ? sorted[0].id : null;
+
+  // Purge trash older than TTL
+  if (purgeOldTrash()) persist();
+
+  // Pick an active note from the active view
+  const visible = sortedNotes().filter((n) =>
+    sidebarView === 'trash' ? isTrashed(n) : !isTrashed(n)
+  );
+  activeId = visible.length ? visible[0].id : null;
 
   applyPreviewMode();
+  applyFocusMode();
   renderList();
   renderEditor();
 }
