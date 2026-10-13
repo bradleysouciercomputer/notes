@@ -62,6 +62,7 @@
 
   button, input, textarea, select { font-family: inherit; }
   .hidden { display: none !important; }
+
   .sr-only {
     position: absolute;
     width: 1px; height: 1px;
@@ -161,6 +162,10 @@
     outline: none;
     transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
   }
+
+  /* Hide native search clear button */
+  .search input::-webkit-search-cancel-button,
+  .search input::-webkit-search-decoration { -webkit-appearance: none; appearance: none; }
 
   .search input::placeholder { color: var(--text-faint); }
 
@@ -326,7 +331,7 @@
     color: var(--text-muted);
   }
 
-  /* Trash view banner */
+  /* Trash banner */
   .trash-banner {
     display: flex;
     align-items: center;
@@ -475,7 +480,8 @@
   .icon-btn, .btn, .split-button button,
   .menu [role="menuitem"], .note-item, .toast__action,
   .search__clear, .context-menu__item, .toolbar__btn,
-  .quick-switcher__item, .trash-banner button {
+  .quick-switcher__item, .trash-banner button,
+  .context-menu__swatch, .focus-exit {
     position: relative;
     overflow: hidden;
     -webkit-tap-highlight-color: transparent;
@@ -805,6 +811,20 @@
   [data-theme="dark"] .icon-sun { display: none; }
   html:not([data-theme="dark"]) .icon-moon { display: none; }
 
+  /* Floating exit-focus button (only when focus mode on & no note selected) */
+  .focus-exit {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 80;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    box-shadow: var(--shadow-sm);
+    display: none;
+  }
+
+  .app.is-focus .focus-exit.is-shown { display: grid; }
+
   /* Context menu */
   .context-menu {
     position: fixed;
@@ -1019,17 +1039,10 @@
     color: var(--accent);
   }
 
-  .quick-switcher__item svg {
-    flex: none;
-    width: 15px; height: 15px;
-    color: var(--text-muted);
-  }
-
-  .quick-switcher__item.is-focused svg { color: var(--accent); }
-
   .quick-switcher__text { flex: 1; min-width: 0; }
 
   .quick-switcher__title {
+    display: block;
     font-size: 14px;
     font-weight: 600;
     white-space: nowrap;
@@ -1038,12 +1051,15 @@
   }
 
   .quick-switcher__meta {
+    display: block;
     font-size: 11.5px;
     color: var(--text-faint);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
+
+  .quick-switcher__item.is-focused .quick-switcher__meta { color: var(--accent); opacity: .8; }
 
   .quick__hint {
     padding: 8px 14px;
@@ -1240,12 +1256,15 @@
       grid-template-rows: minmax(0, 42vh) minmax(0, 1fr);
     }
 
+    .app.is-focus { grid-template-columns: 1fr; grid-template-rows: 1fr; }
+
     .sidebar { border-right: none; border-bottom: 1px solid var(--border); }
     .editor__bar { padding: 12px 16px 10px; }
     .editor__title { font-size: 18px; }
     .editor__body, .editor__preview { padding: 16px; }
     .editor__foot { padding: 8px 16px 11px; }
     .toolbar { padding: 6px 10px; }
+    .editor__stats span:first-child { display: none; }  /* hide char count on narrow screens */
   }
 
   /* Print */
@@ -1253,7 +1272,7 @@
     body { background: #fff; color: #000; }
     .sidebar, .editor__bar, .toolbar, .editor__foot,
     .toast-stack, .modal-backdrop, .context-menu,
-    .quick-backdrop { display: none !important; }
+    .quick-backdrop, .focus-exit { display: none !important; }
     .app { display: block; height: auto; }
     .editor { display: block; }
     .editor__pane { display: block; }
@@ -1264,9 +1283,14 @@
       padding: 0;
       height: auto;
     }
-    .editor__preview { display: block !important; }
     .editor__body { display: none !important; }
-    .editor__title { font-size: 24px; padding: 0 0 12px; border-bottom: 1px solid #ccc; margin-bottom: 16px; }
+    .editor__preview { display: block !important; }
+    .editor__title {
+      font-size: 24px;
+      padding: 0 0 12px;
+      border-bottom: 1px solid #ccc;
+      margin-bottom: 16px;
+    }
   }
 
   /* Reduced motion */
@@ -1474,7 +1498,6 @@
       </div>
     </header>
 
-    <!-- Trash banner (shown in trash view) -->
     <div class="trash-banner hidden" id="trashBanner">
       <span>Deleted notes are kept for 30 days.</span>
       <button type="button" id="emptyTrashBtn">Empty trash</button>
@@ -1486,7 +1509,6 @@
   <!-- ===================== Editor ===================== -->
   <main class="editor">
 
-    <!-- Empty state -->
     <div class="editor__empty" id="emptyState">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -1502,7 +1524,6 @@
       </p>
     </div>
 
-    <!-- Editing surface -->
     <div class="editor__pane hidden" id="editorPane">
 
       <div class="editor__bar">
@@ -1605,7 +1626,6 @@
                     <rect x="6" y="14" width="12" height="8" rx="2"/>
                   </svg>
                   Print note
-                  <span class="menu__shortcut">⌘P</span>
                 </button>
               </li>
               <li role="none"><div class="menu__sep"></div></li>
@@ -1648,7 +1668,7 @@
             <path d="M4 12h16"/>
           </svg>
         </button>
-        <button type="button" class="toolbar__btn" data-cmd="code" title="Inline code" aria-label="Inline code">
+        <button type="button" class="toolbar__btn" data-cmd="code" title="Inline code (⌘⇧C)" aria-label="Inline code">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M16 18l6-6-6-6"/>
@@ -1767,11 +1787,22 @@
   </main>
 </div>
 
+<!-- Floating focus-mode exit (only shown when focus mode is on and no note is selected) -->
+<button type="button" class="icon-btn focus-exit" id="focusExitBtn"
+        aria-label="Exit focus mode" title="Exit focus mode (⌘.)">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+       stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M4 14v6h6"/>
+    <path d="M20 10V4h-6"/>
+    <path d="M4 4l7 7"/>
+    <path d="M20 20l-7-7"/>
+  </svg>
+</button>
+
 <input type="file" id="importInput" accept="application/json,.json" hidden>
 
 <div class="toast-stack" id="toastStack" aria-live="polite" aria-atomic="false"></div>
 
-<!-- Confirm dialog -->
 <div class="modal-backdrop hidden" id="modalBackdrop">
   <div class="modal" role="dialog" aria-modal="true"
        aria-labelledby="modalTitle" aria-describedby="modalDesc">
@@ -1784,7 +1815,6 @@
   </div>
 </div>
 
-<!-- Quick switcher -->
 <div class="quick-backdrop hidden" id="quickBackdrop">
   <div class="quick" role="dialog" aria-modal="true" aria-label="Quick switcher">
     <div class="quick__input">
@@ -1815,7 +1845,7 @@ const SORT_KEY    = 'notes-sort';
 const VIEW_KEY    = 'notes-view';
 const FOCUS_KEY   = 'notes-focus';
 const SAVE_DELAY  = 450;
-const TRASH_TTL   = 30 * 24 * 60 * 60 * 1000; // 30 days
+const TRASH_TTL   = 30 * 24 * 60 * 60 * 1000;
 
 const TEMPLATES = {
   blank:   { title: '', body: '' },
@@ -1845,16 +1875,16 @@ const COLORS = [
 
 const IS_MAC = /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent);
 
-let notes        = [];
-let activeId     = null;
-let query        = '';
-let sortMode     = 'updated';
-let sidebarView  = 'notes';        // 'notes' | 'trash'
-let previewMode  = false;
-let focusMode    = false;
-let saveTimer    = null;
+let notes       = [];
+let activeId    = null;
+let query       = '';
+let sortMode    = 'updated';
+let sidebarView = 'notes';
+let previewMode = false;
+let focusMode   = false;
+let saveTimer   = null;
 let listResortTimer = null;
-let lastDeleted  = null;
+let lastDeleted = null;
 
 const $ = (id) => document.getElementById(id);
 
@@ -1975,8 +2005,7 @@ function persist() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
     return true;
-  } catch (e) {
-    // Storage full or blocked — surface to the user once per session
+  } catch {
     if (!persist._warned) {
       persist._warned = true;
       toast('Could not save — storage may be full');
@@ -2020,13 +2049,14 @@ const RIPPLE_SELECTOR = [
   '.icon-btn', '.btn', '.split-button__main', '.split-button__toggle',
   '.menu [role="menuitem"]', '.note-item', '.toast__action', '.search__clear',
   '.context-menu__item', '.toolbar__btn', '.quick-switcher__item',
-  '.trash-banner button', '.context-menu__swatch'
+  '.trash-banner button', '.context-menu__swatch', '.focus-exit'
 ].join(',');
 
 const RIPPLE_DARK_SELECTOR = [
   '.icon-btn', '.btn--ghost', '.note-item', '.toast__action', '.search__clear',
   '.context-menu__item', '.menu [role="menuitem"]', '.toolbar__btn',
-  '.quick-switcher__item', '.trash-banner button', '.context-menu__swatch'
+  '.quick-switcher__item', '.trash-banner button', '.context-menu__swatch',
+  '.focus-exit'
 ].join(',');
 
 function spawnRipple(el, x, y, { dark = false } = {}) {
@@ -2310,14 +2340,17 @@ function showContextMenu(x, y, items) {
   contextMenu.style.top  = '-9999px';
   contextMenu.classList.add('is-open');
 
-  const rect = contextMenu.getBoundingClientRect();
-  const pad  = 8;
-  const vw   = window.innerWidth;
-  const vh   = window.innerHeight;
+  // Use offsetWidth/offsetHeight so we ignore the scale(.96) transform
+  const menuW = contextMenu.offsetWidth;
+  const menuH = contextMenu.offsetHeight;
+
+  const pad = 8;
+  const vw  = window.innerWidth;
+  const vh  = window.innerHeight;
 
   let left = x, top = y;
-  if (left + rect.width + pad > vw)  left = Math.max(pad, vw - rect.width - pad);
-  if (top  + rect.height + pad > vh) top  = Math.max(pad, vh - rect.height - pad);
+  if (left + menuW + pad > vw) left = Math.max(pad, vw - menuW - pad);
+  if (top  + menuH + pad > vh) top  = Math.max(pad, vh - menuH - pad);
   if (left < pad) left = pad;
   if (top  < pad) top  = pad;
 
@@ -2409,6 +2442,7 @@ const bodyInput    = $('bodyInput');
 const previewPane  = $('previewPane');
 const previewBtn   = $('previewBtn');
 const focusBtn     = $('focusBtn');
+const focusExitBtn = $('focusExitBtn');
 const pinBtn       = $('pinBtn');
 const statusDot    = $('statusDot');
 const statusText   = $('statusText');
@@ -2640,9 +2674,15 @@ function renderEditor() {
     editorPane.classList.add('hidden');
     emptyState.classList.remove('hidden');
 
-    if (sidebarView === 'trash' && notes.some(isTrashed)) {
-      emptyTitle.textContent = 'Deleted notes';
-      emptyText.innerHTML = 'Restore a note from the trash to edit it, or empty the trash to delete permanently.';
+    if (sidebarView === 'trash') {
+      const trashed = notes.filter(isTrashed).length;
+      if (trashed === 0) {
+        emptyTitle.textContent = 'Trash is empty';
+        emptyText.innerHTML = 'Deleted notes will appear here for 30 days before being removed automatically.';
+      } else {
+        emptyTitle.textContent = 'Deleted notes';
+        emptyText.innerHTML = 'Restore a note from the trash to edit it, or empty the trash to delete it permanently.';
+      }
     } else if (notes.some((n) => !isTrashed(n))) {
       emptyTitle.textContent = 'No note selected';
       emptyText.innerHTML = 'Pick a note from the list, or create a new one with <kbd>⌘N</kbd>.';
@@ -2650,6 +2690,7 @@ function renderEditor() {
       emptyTitle.textContent = 'No notes yet';
       emptyText.innerHTML = 'Create your first note to get started. Everything is saved in your browser.';
     }
+    updateFocusExit();
     return;
   }
 
@@ -2667,6 +2708,7 @@ function renderEditor() {
   updateStats();
   refreshPreview();
   setStatus('saved');
+  updateFocusExit();
 }
 
 function updateStats() {
@@ -2714,7 +2756,8 @@ function applyPreviewMode() {
 }
 
 function togglePreview() {
-  if (!getActiveNote() || isTrashed(getActiveNote())) return;
+  const note = getActiveNote();
+  if (!note || isTrashed(note)) return;
   previewMode = !previewMode;
   applyPreviewMode();
 }
@@ -2725,11 +2768,25 @@ function applyFocusMode() {
   app.classList.toggle('is-focus', focusMode);
   focusBtn.classList.toggle('is-on', focusMode);
   focusBtn.setAttribute('aria-pressed', String(focusMode));
+  focusBtn.title = focusMode ? 'Exit focus mode (⌘.)' : 'Focus mode (⌘.)';
   try { localStorage.setItem(FOCUS_KEY, focusMode ? '1' : '0'); } catch {}
+  updateFocusExit();
+}
+
+function updateFocusExit() {
+  // Show the floating exit button only when focus mode is on AND no editable note is visible
+  const note = getActiveNote();
+  const showFloating = focusMode && (!note || isTrashed(note));
+  focusExitBtn.classList.toggle('is-shown', showFloating);
 }
 
 focusBtn.addEventListener('click', () => {
   focusMode = !focusMode;
+  applyFocusMode();
+});
+
+focusExitBtn.addEventListener('click', () => {
+  focusMode = false;
   applyFocusMode();
 });
 
@@ -2739,7 +2796,7 @@ focusBtn.addEventListener('click', () => {
 function selectNote(id) {
   if (activeId === id) return;
   activeId = id;
-  previewMode = false;      // reset preview when switching notes
+  previewMode = false;
   applyPreviewMode();
   renderList();
   renderEditor();
@@ -2897,21 +2954,33 @@ function downloadNote(note) {
 function printNote() {
   const note = getActiveNote();
   if (!note || isTrashed(note)) return;
-  window.print();
+  // Ensure preview is rendered for print (the print stylesheet only shows the preview)
+  const wasPreview = previewMode;
+  if (!wasPreview) {
+    previewMode = true;
+    applyPreviewMode();
+  }
+  setTimeout(() => {
+    window.print();
+    if (!wasPreview) {
+      previewMode = false;
+      applyPreviewMode();
+    }
+  }, 60);
 }
 
 /* ---------- Trash ---------- */
 function trashNote(id) {
   const note = notes.find((n) => n.id === id);
-  if (!note) return;
+  if (!note || isTrashed(note)) return;
 
   note.deletedAt = Date.now();
   note.pinned = false;
   note.updatedAt = Date.now();
 
-  const remaining = notes.filter((n) => !isTrashed(n) && n.id !== id);
-  const sorted = [...remaining].sort((a, b) => b.updatedAt - a.updatedAt);
-  activeId = sorted.length ? sorted[0].id : null;
+  // Choose a new active note from the same view
+  const visible = sortedNotes().filter((n) => !isTrashed(n) && n.id !== id);
+  activeId = visible.length ? visible[0].id : null;
 
   persist();
   renderList();
@@ -2924,6 +2993,8 @@ function trashNote(id) {
         note.deletedAt = 0;
         note.updatedAt = Date.now();
         activeId = note.id;
+        sidebarView = 'notes';
+        try { localStorage.setItem(VIEW_KEY, sidebarView); } catch {}
         persist();
         renderList();
         renderEditor();
@@ -2956,7 +3027,10 @@ async function purgeNote(id) {
   if (!ok) return;
 
   notes = notes.filter((n) => n.id !== id);
-  if (activeId === id) activeId = null;
+  if (activeId === id) {
+    const visible = filteredNotes();
+    activeId = visible.length ? visible[0].id : null;
+  }
   persist();
   renderList();
   renderEditor();
@@ -2974,6 +3048,9 @@ async function emptyTrash() {
   if (!ok) return;
 
   notes = notes.filter((n) => !isTrashed(n));
+  // Clear the active id if it pointed to a trashed note
+  if (!notes.find((n) => n.id === activeId)) activeId = null;
+
   persist();
   renderList();
   renderEditor();
@@ -3042,22 +3119,23 @@ document.addEventListener('visibilitychange', () => {
 window.addEventListener('beforeunload', flushSave);
 
 /* ============================================================
-   19. Markdown toolbar & formatting
+   19. Markdown formatting helpers
    ============================================================ */
-function replaceSelection(ta, text, selectStart, selectEnd) {
+function getCurrentLine(ta) {
+  const pos = ta.selectionStart;
+  const value = ta.value;
+  const lineStart = value.lastIndexOf('\n', pos - 1) + 1;
+  let lineEnd = value.indexOf('\n', pos);
+  if (lineEnd === -1) lineEnd = value.length;
+  return { lineStart, lineEnd, text: value.slice(lineStart, lineEnd) };
+}
+
+function insertAtCursor(ta, text) {
   const start = ta.selectionStart;
   const end   = ta.selectionEnd;
-  const before = ta.value.slice(0, start);
-  const after  = ta.value.slice(end);
-  ta.value = before + text + after;
-
-  if (typeof selectStart === 'number') {
-    ta.selectionStart = start + selectStart;
-    ta.selectionEnd   = start + (typeof selectEnd === 'number' ? selectEnd : selectStart);
-  } else {
-    ta.selectionStart = ta.selectionEnd = start + text.length;
-  }
-
+  const value = ta.value;
+  ta.value = value.slice(0, start) + text + value.slice(end);
+  ta.selectionStart = ta.selectionEnd = start + text.length;
   ta.dispatchEvent(new Event('input', { bubbles: true }));
 }
 
@@ -3068,62 +3146,42 @@ function wrapSelection(ta, before, after = before, placeholder = '') {
   const content = selected || placeholder;
 
   const text = before + content + after;
-  const result = replaceSelectionWithCursor(ta, text, before.length, before.length + content.length);
+  ta.value = ta.value.slice(0, start) + text + ta.value.slice(end);
 
-  if (!selected && placeholder) {
-    // Select placeholder so the user can overwrite it
-    ta.setSelectionRange(start + before.length, start + before.length + placeholder.length);
-  } else {
-    ta.setSelectionRange(start + before.length, start + before.length + content.length);
-  }
-}
+  const selStart = start + before.length;
+  const selEnd   = selStart + content.length;
+  ta.setSelectionRange(selStart, selEnd);
 
-function replaceSelectionWithCursor(ta, text) {
-  const start = ta.selectionStart;
-  const end   = ta.selectionEnd;
-  const before = ta.value.slice(0, start);
-  const after  = ta.value.slice(end);
-  ta.value = before + text + after;
   ta.dispatchEvent(new Event('input', { bubbles: true }));
-  return { start, text };
 }
 
-/** Get the full line (start index and text) at the caret. */
-function getCurrentLine(ta) {
-  const pos = ta.selectionStart;
-  const value = ta.value;
-  const lineStart = value.lastIndexOf('\n', pos - 1) + 1;
-  let lineEnd = value.indexOf('\n', pos);
-  if (lineEnd === -1) lineEnd = value.length;
-  return { lineStart, lineEnd, text: value.slice(lineStart, lineEnd) };
-}
-
-/** Apply a prefix to the current line (or toggle if already present). */
+/**
+ * Toggle a line prefix.
+ * - If the line already starts with `prefix`, remove it.
+ * - Otherwise, if it starts with one of `altPrefixes`, replace that with `prefix`.
+ * - Otherwise, prepend `prefix`.
+ */
 function toggleLinePrefix(ta, prefix, altPrefixes = []) {
   const { lineStart, lineEnd, text } = getCurrentLine(ta);
-  const allPrefixes = [prefix, ...altPrefixes];
+  let newText;
 
-  const matched = allPrefixes.find((p) => text.startsWith(p));
-  const newText = matched
-    ? text.slice(matched.length)
-    : prefix + text;
+  if (text.startsWith(prefix)) {
+    newText = text.slice(prefix.length);
+  } else {
+    const alt = altPrefixes.find((p) => text.startsWith(p));
+    newText = alt ? prefix + text.slice(alt.length) : prefix + text;
+  }
 
-  const value = ta.value;
-  ta.value = value.slice(0, lineStart) + newText + value.slice(lineEnd);
+  if (newText === text) return;
 
   const delta = newText.length - text.length;
-  ta.selectionStart = Math.max(lineStart, ta.selectionStart + delta);
-  ta.selectionEnd   = Math.max(lineStart, ta.selectionEnd + delta);
+  ta.value = ta.value.slice(0, lineStart) + newText + ta.value.slice(lineEnd);
 
-  ta.dispatchEvent(new Event('input', { bubbles: true }));
-}
+  // Clamp caret/selection so they stay within the line
+  const clampPos = (p) => Math.max(lineStart, Math.min(lineStart + newText.length, p + delta));
+  ta.selectionStart = clampPos(ta.selectionStart);
+  ta.selectionEnd   = clampPos(ta.selectionEnd);
 
-function insertAtCursor(ta, text) {
-  const start = ta.selectionStart;
-  const end   = ta.selectionEnd;
-  const value = ta.value;
-  ta.value = value.slice(0, start) + text + value.slice(end);
-  ta.selectionStart = ta.selectionEnd = start + text.length;
   ta.dispatchEvent(new Event('input', { bubbles: true }));
 }
 
@@ -3138,30 +3196,42 @@ function applyFormat(cmd) {
     case 'strike': wrapSelection(ta, '~~', '~~', 'strikethrough'); break;
     case 'code':   wrapSelection(ta, '`', '`', 'code'); break;
     case 'link':   wrapSelection(ta, '[', '](url)', 'link text'); break;
-    case 'h1':     toggleLinePrefix(ta, '# ', ['## ', '### ']); break;
-    case 'h2':     toggleLinePrefix(ta, '## ', ['# ', '### ']); break;
-    case 'quote':  toggleLinePrefix(ta, '> '); break;
-    case 'ul':     toggleLinePrefix(ta, '- '); break;
-    case 'ol':     toggleLinePrefix(ta, '1. '); break;
-    case 'task':   toggleLinePrefix(ta, '- [ ] '); break;
+
+    case 'h1':    toggleLinePrefix(ta, '# ',  ['## ', '### ', '#### ']); break;
+    case 'h2':    toggleLinePrefix(ta, '## ', ['# ', '### ', '#### ']); break;
+    case 'quote': toggleLinePrefix(ta, '> '); break;
+    case 'ul':    toggleLinePrefix(ta, '- ',  ['* ', '+ ', '- [ ] ', '1. ']); break;
+    case 'ol':    toggleLinePrefix(ta, '1. ', ['- ', '* ', '+ ', '- [ ] ']); break;
+    case 'task':  toggleLinePrefix(ta, '- [ ] ', ['- ', '* ', '+ ']); break;
+
     case 'hr': {
-      const { lineEnd } = getCurrentLine(ta);
-      const needsNewline = ta.value[lineEnd] !== '\n' && lineEnd < ta.value.length;
-      insertAtCursor(ta, (needsNewline ? '\n' : '') + '\n---\n');
+      const start = ta.selectionStart;
+      const end   = ta.selectionEnd;
+      const before = ta.value.slice(0, start);
+      const after  = ta.value.slice(end);
+      const prefix = (before === '' || before.endsWith('\n')) ? '' : '\n';
+      const suffix = (after  === '' || after.startsWith('\n')) ? '' : '\n';
+      const text = prefix + '---' + suffix;
+      ta.value = before + text + after;
+      ta.selectionStart = ta.selectionEnd = start + text.length;
+      ta.dispatchEvent(new Event('input', { bubbles: true }));
       break;
     }
+
     case 'codeblock': {
       const start = ta.selectionStart;
       const end   = ta.selectionEnd;
       const sel = ta.value.slice(start, end);
       const before = ta.value.slice(0, start);
       const after  = ta.value.slice(end);
-      const padBefore = before.endsWith('\n') || before === '' ? '' : '\n';
-      const padAfter  = after.startsWith('\n') || after === '' ? '' : '\n';
-      const block = padBefore + '```\n' + (sel || 'code') + '\n```' + padAfter;
+      const padBefore = (before === '' || before.endsWith('\n')) ? '' : '\n';
+      const padAfter  = (after === '' || after.startsWith('\n')) ? '' : '\n';
+      const body = sel || 'code';
+      const block = padBefore + '```\n' + body + '\n```' + padAfter;
       ta.value = before + block + after;
-      ta.selectionStart = start + padBefore.length + 4;
-      ta.selectionEnd   = ta.selectionStart + (sel || 'code').length;
+      const bodyStart = start + padBefore.length + 4; // 4 = len("```\n")
+      ta.selectionStart = bodyStart;
+      ta.selectionEnd   = bodyStart + body.length;
       ta.dispatchEvent(new Event('input', { bubbles: true }));
       break;
     }
@@ -3182,7 +3252,7 @@ bodyInput.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && !e.shiftKey && !e.metaKey && !e.ctrlKey) {
     const { lineStart, lineEnd, text } = getCurrentLine(bodyInput);
 
-    // Only when caret is at end of the current line
+    // Only when the caret is at the end of the current line
     if (bodyInput.selectionStart !== lineEnd) return;
 
     // Task list
@@ -3191,9 +3261,9 @@ bodyInput.addEventListener('keydown', (e) => {
       e.preventDefault();
       const [, indent, bullet, , content] = taskMatch;
       if (!content.trim()) {
-        // Empty task — remove the marker
         bodyInput.value = bodyInput.value.slice(0, lineStart) + indent + bodyInput.value.slice(lineEnd);
         bodyInput.selectionStart = bodyInput.selectionEnd = lineStart + indent.length;
+        bodyInput.dispatchEvent(new Event('input', { bubbles: true }));
       } else {
         insertAtCursor(bodyInput, '\n' + indent + bullet + ' [ ] ');
       }
@@ -3208,6 +3278,7 @@ bodyInput.addEventListener('keydown', (e) => {
       if (!content.trim()) {
         bodyInput.value = bodyInput.value.slice(0, lineStart) + indent + bodyInput.value.slice(lineEnd);
         bodyInput.selectionStart = bodyInput.selectionEnd = lineStart + indent.length;
+        bodyInput.dispatchEvent(new Event('input', { bubbles: true }));
       } else {
         insertAtCursor(bodyInput, '\n' + indent + bullet + ' ');
       }
@@ -3222,6 +3293,7 @@ bodyInput.addEventListener('keydown', (e) => {
       if (!content.trim()) {
         bodyInput.value = bodyInput.value.slice(0, lineStart) + indent + bodyInput.value.slice(lineEnd);
         bodyInput.selectionStart = bodyInput.selectionEnd = lineStart + indent.length;
+        bodyInput.dispatchEvent(new Event('input', { bubbles: true }));
       } else {
         insertAtCursor(bodyInput, '\n' + indent + (parseInt(num, 10) + 1) + '. ');
       }
@@ -3236,6 +3308,7 @@ bodyInput.addEventListener('keydown', (e) => {
       if (!content.trim()) {
         bodyInput.value = bodyInput.value.slice(0, lineStart) + indent + bodyInput.value.slice(lineEnd);
         bodyInput.selectionStart = bodyInput.selectionEnd = lineStart + indent.length;
+        bodyInput.dispatchEvent(new Event('input', { bubbles: true }));
       } else {
         insertAtCursor(bodyInput, '\n' + indent + '> ');
       }
@@ -3251,7 +3324,6 @@ bodyInput.addEventListener('keydown', (e) => {
     const value = bodyInput.value;
 
     if (e.shiftKey) {
-      // Remove up to 2 leading spaces
       const toRemove = text.match(/^(\s{1,2})/);
       if (toRemove) {
         const n = toRemove[1].length;
@@ -3409,13 +3481,20 @@ $('trashBtn').addEventListener('click', () => {
   sidebarView = sidebarView === 'trash' ? 'notes' : 'trash';
   try { localStorage.setItem(VIEW_KEY, sidebarView); } catch {}
 
-  // Clear active selection if it's not visible in the new view
+  // Clear active selection if it isn't visible in the new view
   const note = getActiveNote();
   if (note && ((sidebarView === 'trash') !== isTrashed(note))) {
     activeId = null;
     previewMode = false;
     applyPreviewMode();
+  } else if (!note) {
+    // Try to select the first note in the new view
+    const visible = sortedNotes().filter((n) =>
+      sidebarView === 'trash' ? isTrashed(n) : !isTrashed(n)
+    );
+    if (visible.length) activeId = visible[0].id;
   }
+
   renderList();
   renderEditor();
 });
@@ -3498,7 +3577,6 @@ function fuzzyScore(query, text) {
   const q = query.toLowerCase();
   const t = text.toLowerCase();
   if (t.includes(q)) return 2 + (q.length / Math.max(1, t.length));
-  // Subsequence match
   let qi = 0;
   for (let i = 0; i < t.length && qi < q.length; i++) {
     if (t[i] === q[qi]) qi++;
@@ -3634,7 +3712,7 @@ function showNoteContextMenu(x, y, noteId) {
 
   if (isTrashed(note)) {
     showContextMenu(x, y, [
-      { label: 'Restore',          icon: ICON.restore,  action: () => restoreNote(noteId) },
+      { label: 'Restore',           icon: ICON.restore,  action: () => restoreNote(noteId) },
       { label: 'Copy to clipboard', icon: ICON.copy,     action: () => copyNote(noteId) },
       { label: 'Download as .md',   icon: ICON.download, action: () => downloadNote(note) },
       { type: 'separator' },
@@ -3695,7 +3773,7 @@ function showEditorContextMenu(x, y) {
     { label: 'Copy to clipboard', icon: ICON.copy,      action: () => copyNote(note.id) },
     { label: 'Share…',            icon: ICON.share,     action: () => shareNote(note.id) },
     { label: 'Download as .md',   icon: ICON.download,  action: () => downloadNote(note) },
-    { label: 'Print note',        icon: ICON.print,     shortcut: IS_MAC ? '⌘P' : 'Ctrl+P', action: printNote },
+    { label: 'Print note',        icon: ICON.print,     action: printNote },
     { type: 'separator' },
     { label: 'Move to trash', icon: ICON.del, danger: true, action: () => trashNote(note.id) }
   ]);
@@ -3717,7 +3795,6 @@ editorPane.addEventListener('contextmenu', (e) => {
   showEditorContextMenu(e.clientX, e.clientY);
 });
 
-// Prevent the native menu elsewhere in the app, but allow in inputs / dialogs
 document.addEventListener('contextmenu', (e) => {
   if (e.target.closest('.menu, .modal-backdrop, .toast-stack, input, textarea, .quick-backdrop, .context-menu')) return;
   if (e.target.closest('.sidebar, .editor, .toolbar')) e.preventDefault();
@@ -3747,7 +3824,6 @@ document.addEventListener('pointermove', (e) => {
   if (!lpTimer || !lpStart) return;
   const dx = e.clientX - lpStart.x;
   const dy = e.clientY - lpStart.y;
-  // Allow more slop to avoid canceling on a finger jitter
   if (Math.hypot(dx, dy) > 12) {
     clearTimeout(lpTimer);
     lpTimer = null;
@@ -3814,7 +3890,6 @@ document.addEventListener('keydown', (e) => {
       applyFormat('link');
       return;
     }
-    // Otherwise focus search
     e.preventDefault();
     searchInput.focus();
     searchInput.select();
@@ -3852,12 +3927,12 @@ document.addEventListener('keydown', (e) => {
     return;
   }
 
-  // ⌘B / ⌘I / ⌘⇧X — inline formatting
+  // ⌘B / ⌘I / ⌘⇧X / ⌘⇧C — inline formatting
   if (mod && document.activeElement === bodyInput && !previewMode) {
-    if (key === 'b') { e.preventDefault(); applyFormat('bold');   return; }
-    if (key === 'i') { e.preventDefault(); applyFormat('italic'); return; }
-    if (e.shiftKey && key === 'x') { e.preventDefault(); applyFormat('strike'); return; }
-    if (e.shiftKey && key === 'c') { e.preventDefault(); applyFormat('code');   return; }
+    if (key === 'b' && !e.shiftKey) { e.preventDefault(); applyFormat('bold');   return; }
+    if (key === 'i' && !e.shiftKey) { e.preventDefault(); applyFormat('italic'); return; }
+    if (e.shiftKey && key === 'x')  { e.preventDefault(); applyFormat('strike'); return; }
+    if (e.shiftKey && key === 'c')  { e.preventDefault(); applyFormat('code');   return; }
   }
 
   // Escape — close menus / blur inputs
@@ -3884,7 +3959,10 @@ setInterval(() => {
     const note = notes.find((n) => n.id === btn.dataset.id);
     if (!note) return;
     const el = btn.querySelector('.note-item__time');
-    if (el) el.textContent = formatTime(note.updatedAt);
+    if (el) {
+      el.textContent = formatTime(note.updatedAt)
+        + (isTrashed(note) ? ' · deleted ' + formatTime(note.deletedAt) : '');
+    }
   });
 }, 60_000);
 
@@ -3894,7 +3972,6 @@ setInterval(() => {
 function init() {
   initTheme();
 
-  // Restore UI state
   try {
     const v = localStorage.getItem(VIEW_KEY);
     if (v === 'trash' || v === 'notes') sidebarView = v;
@@ -3903,10 +3980,8 @@ function init() {
 
   notes = loadNotes();
 
-  // Purge trash older than TTL
   if (purgeOldTrash()) persist();
 
-  // Pick an active note from the active view
   const visible = sortedNotes().filter((n) =>
     sidebarView === 'trash' ? isTrashed(n) : !isTrashed(n)
   );
